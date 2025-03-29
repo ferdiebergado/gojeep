@@ -13,8 +13,10 @@ import (
 func DecodeJSON[T any]() goexpress.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			slog.Info("Checking content-type for application/json...")
-			if r.Header.Get(HeaderContentType) == MimeJSON {
+			slog.Info("Checking content-type...")
+			contentType := r.Header.Get(HeaderContentType)
+
+			if contentType == MimeJSON {
 				slog.Info("Decoding json body...")
 				var decoded T
 				decoder := json.NewDecoder(r.Body)
@@ -25,8 +27,10 @@ func DecodeJSON[T any]() goexpress.Middleware {
 				}
 				ctx := NewParamsContext(r.Context(), decoded)
 				r = r.WithContext(ctx)
+				next.ServeHTTP(w, r)
+			} else {
+				badRequestError(w, r, fmt.Errorf("Invalid content-type: %s", contentType))
 			}
-			next.ServeHTTP(w, r)
 		})
 	}
 }
