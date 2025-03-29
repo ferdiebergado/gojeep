@@ -54,7 +54,7 @@ clean_on_exit = false
 
 [proxy]
 app_port = 8080
-enabled = true
+enabled = false
 proxy_port = 8888
 
 [screen]
