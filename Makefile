@@ -161,12 +161,6 @@ gen:
 tidy:
 	@go mod tidy
 
-assets-bundle:
-	@npx tsc && node build.mjs
-
-assets-watch:
-	@node build.dev.mjs
-
 vulncheck:
 	@echo "Running govulncheck..."
 	@command -v govulncheck>/dev/null || go install golang.org/x/vuln/cmd/govulncheck@latest
