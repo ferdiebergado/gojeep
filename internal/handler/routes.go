@@ -14,8 +14,3 @@ func mountAPIRoutes(r *goexpress.Router, h *APIHandler, v *validator.Validate) {
 		return gr
 	})
 }
-
-func mountRoutes(r *goexpress.Router, h *Handler) {
-	r.Get("/dashboard", h.Base.HandleDashboard)
-	r.Get("/auth/register", h.User.HandleRegister)
-}

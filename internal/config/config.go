@@ -38,18 +38,10 @@ type ServerConfig struct {
 	ShutdownTimeout int `json:"shutdown_timeout,omitempty"`
 }
 
-type TemplateConfig struct {
-	Path         string `json:"path,omitempty"`
-	LayoutFile   string `json:"layout_file,omitempty"`
-	PartialsPath string `json:"partials_path,omitempty"`
-	PagesPath    string `json:"pages_path,omitempty"`
-}
-
 type Config struct {
-	App      EnvConfig      `json:"app,omitempty"`
-	Db       DBConfig       `json:"db,omitempty"`
-	Server   ServerConfig   `json:"server,omitempty"`
-	Template TemplateConfig `json:"template,omitempty"`
+	App    EnvConfig    `json:"app,omitempty"`
+	Db     DBConfig     `json:"db,omitempty"`
+	Server ServerConfig `json:"server,omitempty"`
 }
 
 func LoadConfig(path string) (*Config, error) {

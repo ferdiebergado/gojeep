@@ -112,10 +112,6 @@ func loadConfiguration() (*config.Config, error) {
 func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies, error) {
 	router := goexpress.New()
 	validate = validation.New()
-	tmpl, err := handler.NewTemplate(cfg.Template)
-	if err != nil {
-		return nil, err
-	}
 	hasher := &security.Argon2Hasher{}
 
 	deps := &handler.AppDependencies{
@@ -123,7 +119,6 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 		DB:        db,
 		Router:    router,
 		Validator: validate,
-		Template:  tmpl,
 		Hasher:    hasher,
 	}
 	return deps, nil

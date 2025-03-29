@@ -17,7 +17,6 @@ type App struct {
 	db        *sql.DB
 	router    *goexpress.Router
 	validater *validator.Validate
-	template  *Template
 	hasher    security.Hasher
 }
 
@@ -26,7 +25,6 @@ type AppDependencies struct {
 	DB        *sql.DB
 	Router    *goexpress.Router
 	Validator *validator.Validate
-	Template  *Template
 	Hasher    security.Hasher
 }
 
@@ -36,7 +34,6 @@ func NewApp(deps *AppDependencies) *App {
 		db:        deps.DB,
 		router:    deps.Router,
 		validater: deps.Validator,
-		template:  deps.Template,
 		hasher:    deps.Hasher,
 	}
 	app.SetupMiddlewares()
@@ -61,9 +58,6 @@ func (a *App) SetupRoutes() {
 	repo := repository.NewRepository(a.db)
 	svc := service.NewService(repo, a.hasher)
 
-	htmlHandler := NewHandler(a.template)
 	apiHandler := NewAPIHandler(*svc)
-
-	mountRoutes(a.router, htmlHandler)
 	mountAPIRoutes(a.router, apiHandler, a.validater)
 }

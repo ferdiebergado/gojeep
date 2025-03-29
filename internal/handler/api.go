@@ -11,6 +11,12 @@ import (
 	"github.com/ferdiebergado/gopherkit/http/response"
 )
 
+const (
+	HeaderContentType = "Content-Type"
+	MimeJSONUTF8      = "application/json; charset=utf-8"
+	MimeHTMLUTF8      = "text/html; charset=utf-8"
+)
+
 type APIResponse[T any] struct {
 	Message string            `json:"message,omitempty"`
 	Errors  map[string]string `json:"errors,omitempty"`
