@@ -55,7 +55,7 @@ func TestUserHandlerHandleUserRegisterSuccess(t *testing.T) {
 	}
 
 	mockService.EXPECT().RegisterUser(handler.NewParamsContext(context.Background(), regRequest), regParams).Return(user, nil)
-	userHandler := handler.NewUserAPIHandler(mockService)
+	userHandler := handler.NewUserHandler(mockService)
 	r := goexpress.New()
 	r.Post(regUrl, userHandler.HandleUserRegister,
 		handler.DecodeJSON[handler.RegisterUserRequest](), handler.ValidateInput[handler.RegisterUserRequest](validate))
@@ -77,7 +77,7 @@ func TestUserHandlerHandleUserRegisterSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, res.StatusCode)
 	assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
 
-	var apiRes handler.APIResponse[handler.RegisterUserResponse]
+	var apiRes handler.Response[handler.RegisterUserResponse]
 	if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
 		t.Fatal(message.Get("jsonFailed"), err)
 	}
@@ -94,7 +94,7 @@ func TestUserHandlerHandleUserRegisterInvalidInput(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	mockService := mock.NewMockUserService(ctrl)
-	userHandler := handler.NewUserAPIHandler(mockService)
+	userHandler := handler.NewUserHandler(mockService)
 	r := goexpress.New()
 	r.Post(regUrl, userHandler.HandleUserRegister,
 		handler.DecodeJSON[handler.RegisterUserRequest](), handler.ValidateInput[handler.RegisterUserRequest](validate))
@@ -125,7 +125,7 @@ func TestUserHandlerHandleUserRegisterInvalidInput(t *testing.T) {
 			assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
 			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 
-			var apiRes handler.APIResponse[handler.RegisterUserResponse]
+			var apiRes handler.Response[handler.RegisterUserResponse]
 			if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
 				t.Fatal(message.Get("jsonFailed"), err)
 			}
@@ -149,7 +149,7 @@ func TestUserHandlerHandleUserRegisterDuplicateUser(t *testing.T) {
 	}
 
 	mockService.EXPECT().RegisterUser(handler.NewParamsContext(context.Background(), regRequest), regParams).Return(nil, service.ErrDuplicateUser)
-	userHandler := handler.NewUserAPIHandler(mockService)
+	userHandler := handler.NewUserHandler(mockService)
 	r := goexpress.New()
 	r.Post(regUrl, userHandler.HandleUserRegister,
 		handler.DecodeJSON[handler.RegisterUserRequest](), handler.ValidateInput[handler.RegisterUserRequest](validate))
@@ -170,7 +170,7 @@ func TestUserHandlerHandleUserRegisterDuplicateUser(t *testing.T) {
 	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
 	assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
 
-	var apiRes handler.APIResponse[handler.RegisterUserResponse]
+	var apiRes handler.Response[handler.RegisterUserResponse]
 	if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
 		t.Fatal(message.Get("jsonFailed"), err)
 	}

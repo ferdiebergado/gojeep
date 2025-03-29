@@ -24,7 +24,7 @@ func TestHandlerHandleHealth(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockService := mock.NewMockService(ctrl)
 	mockService.EXPECT().PingDB(context.Background()).Return(nil)
-	baseHandler := handler.NewBaseAPIHandler(mockService)
+	baseHandler := handler.NewBaseHandler(mockService)
 	r := goexpress.New()
 	r.Get(url, baseHandler.HandleHealth)
 
@@ -38,7 +38,7 @@ func TestHandlerHandleHealth(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
 
-	var apiRes handler.APIResponse[any]
+	var apiRes handler.Response[any]
 	if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
 		t.Fatal(message.Get("jsonFailed"), err)
 	}

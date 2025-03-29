@@ -16,33 +16,33 @@ const (
 	MimeJSON          = "application/json"
 )
 
-type APIResponse[T any] struct {
+type Response[T any] struct {
 	Message string            `json:"message,omitempty"`
 	Errors  map[string]string `json:"errors,omitempty"`
 	Data    T                 `json:"data,omitempty"`
 }
 
-type APIHandler struct {
-	Base BaseAPIHandler
-	User UserAPIHandler
+type Handler struct {
+	Base BaseHandler
+	User UserHandler
 }
 
-func NewAPIHandler(svc service.Service) *APIHandler {
-	return &APIHandler{
-		Base: *NewBaseAPIHandler(svc.Base),
-		User: *NewUserAPIHandler(svc.User),
+func NewHandler(svc service.Service) *Handler {
+	return &Handler{
+		Base: *NewBaseHandler(svc.Base),
+		User: *NewUserHandler(svc.User),
 	}
 }
 
-type BaseAPIHandler struct {
+type BaseHandler struct {
 	svc service.BaseService
 }
 
-func NewBaseAPIHandler(svc service.BaseService) *BaseAPIHandler {
-	return &BaseAPIHandler{svc: svc}
+func NewBaseHandler(svc service.BaseService) *BaseHandler {
+	return &BaseHandler{svc: svc}
 }
 
-func (h *BaseAPIHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
+func (h *BaseHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 	status := http.StatusOK
 	msg := "healthy"
 
@@ -52,15 +52,15 @@ func (h *BaseAPIHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 		slog.Error("failed to connect to the database", "reason", err)
 	}
 
-	response.JSON(w, r, status, APIResponse[any]{Message: msg})
+	response.JSON(w, r, status, Response[any]{Message: msg})
 }
 
-type UserAPIHandler struct {
+type UserHandler struct {
 	service service.UserService
 }
 
-func NewUserAPIHandler(userService service.UserService) *UserAPIHandler {
-	return &UserAPIHandler{
+func NewUserHandler(userService service.UserService) *UserHandler {
+	return &UserHandler{
 		service: userService,
 	}
 }
@@ -78,7 +78,7 @@ type RegisterUserResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (h *UserAPIHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request) {
 	_, req, _ := FromParamsContext[RegisterUserRequest](r.Context())
 	params := service.RegisterUserParams{
 		Email:    req.Email,
@@ -94,7 +94,7 @@ func (h *UserAPIHandler) HandleUserRegister(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	res := APIResponse[*RegisterUserResponse]{
+	res := Response[*RegisterUserResponse]{
 		Message: message.Get("regSuccess"),
 		Data: &RegisterUserResponse{
 			ID:        user.ID,

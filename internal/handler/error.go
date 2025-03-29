@@ -21,7 +21,7 @@ func errorResponse(w http.ResponseWriter, r *http.Request, status int, err error
 	slog.Error("server error", "reason", err, "request", fmt.Sprint(r))
 
 	if r.Header.Get(HeaderContentType) == MimeJSON {
-		res := APIResponse[any]{
+		res := Response[any]{
 			Message: msg,
 		}
 		response.JSON(w, r, status, res)

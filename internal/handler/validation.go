@@ -15,7 +15,7 @@ func validationError(w http.ResponseWriter, r *http.Request, err error) {
 		errs[e.Field()] = validationMessage(e)
 	}
 
-	res := APIResponse[any]{
+	res := Response[any]{
 		Message: "Invalid input.",
 		Errors:  errs,
 	}
