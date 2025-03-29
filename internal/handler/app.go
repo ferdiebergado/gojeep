@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"net/http"
 
 	"github.com/ferdiebergado/goexpress"
 	"github.com/ferdiebergado/gojeep/internal/config"
@@ -50,11 +49,6 @@ func (a *App) SetupMiddlewares() {
 }
 
 func (a *App) SetupRoutes() {
-	if a.cfg.App.Env == "development" {
-		const prefix = "/assets/"
-		a.router.Handle("GET "+prefix, http.StripPrefix(prefix, http.FileServer(http.Dir("web/assets/"))))
-	}
-
 	repo := repository.NewRepository(a.db)
 	svc := service.NewService(repo, a.hasher)
 
