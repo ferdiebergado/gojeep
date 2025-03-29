@@ -13,8 +13,7 @@ import (
 
 const (
 	HeaderContentType = "Content-Type"
-	MimeJSONUTF8      = "application/json; charset=utf-8"
-	MimeHTMLUTF8      = "text/html; charset=utf-8"
+	MimeJSON          = "application/json"
 )
 
 type APIResponse[T any] struct {

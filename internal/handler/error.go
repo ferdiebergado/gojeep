@@ -20,7 +20,7 @@ func unprocessableError(w http.ResponseWriter, r *http.Request, err error) {
 func errorResponse(w http.ResponseWriter, r *http.Request, status int, err error, msg string) {
 	slog.Error("server error", "reason", err, "request", fmt.Sprint(r))
 
-	if r.Header.Get(HeaderContentType) == MimeJSONUTF8 {
+	if r.Header.Get(HeaderContentType) == MimeJSON {
 		res := APIResponse[any]{
 			Message: msg,
 		}

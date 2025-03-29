@@ -67,7 +67,7 @@ func TestUserHandlerHandleUserRegisterSuccess(t *testing.T) {
 	}
 
 	req := httptest.NewRequest("POST", regUrl, bytes.NewBuffer(reqJSON))
-	req.Header.Set(handler.HeaderContentType, handler.MimeJSONUTF8)
+	req.Header.Set(handler.HeaderContentType, handler.MimeJSON)
 	rr := httptest.NewRecorder()
 	r.ServeHTTP(rr, req)
 
@@ -75,7 +75,7 @@ func TestUserHandlerHandleUserRegisterSuccess(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusCreated, res.StatusCode)
-	assert.Equal(t, handler.MimeJSONUTF8, res.Header[handler.HeaderContentType][0])
+	assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
 
 	var apiRes handler.APIResponse[handler.RegisterUserResponse]
 	if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
@@ -115,14 +115,14 @@ func TestUserHandlerHandleUserRegisterInvalidInput(t *testing.T) {
 			}
 
 			req := httptest.NewRequest("POST", regUrl, bytes.NewBuffer(reqJSON))
-			req.Header.Set(handler.HeaderContentType, handler.MimeJSONUTF8)
+			req.Header.Set(handler.HeaderContentType, handler.MimeJSON)
 			rr := httptest.NewRecorder()
 			r.ServeHTTP(rr, req)
 
 			res := rr.Result()
 			defer res.Body.Close()
 
-			assert.Equal(t, handler.MimeJSONUTF8, res.Header[handler.HeaderContentType][0])
+			assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
 			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 
 			var apiRes handler.APIResponse[handler.RegisterUserResponse]
@@ -160,7 +160,7 @@ func TestUserHandlerHandleUserRegisterDuplicateUser(t *testing.T) {
 	}
 
 	req := httptest.NewRequest(http.MethodPost, regUrl, bytes.NewBuffer(reqJSON))
-	req.Header.Set(handler.HeaderContentType, handler.MimeJSONUTF8)
+	req.Header.Set(handler.HeaderContentType, handler.MimeJSON)
 	rr := httptest.NewRecorder()
 	r.ServeHTTP(rr, req)
 
@@ -168,7 +168,7 @@ func TestUserHandlerHandleUserRegisterDuplicateUser(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
-	assert.Equal(t, handler.MimeJSONUTF8, res.Header[handler.HeaderContentType][0])
+	assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
 
 	var apiRes handler.APIResponse[handler.RegisterUserResponse]
 	if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
