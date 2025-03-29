@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ferdiebergado/gojeep/internal/pkg/message"
+	"github.com/ferdiebergado/gojeep/internal/service"
 	"github.com/ferdiebergado/gopherkit/http/response"
-	"github.com/ferdiebergado/goweb/internal/pkg/message"
-	"github.com/ferdiebergado/goweb/internal/service"
 )
 
 type APIResponse[T any] struct {

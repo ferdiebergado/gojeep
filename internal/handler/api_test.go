@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/ferdiebergado/goexpress"
-	"github.com/ferdiebergado/goweb/internal/handler"
-	"github.com/ferdiebergado/goweb/internal/pkg/message"
-	"github.com/ferdiebergado/goweb/internal/service/mock"
+	"github.com/ferdiebergado/gojeep/internal/handler"
+	"github.com/ferdiebergado/gojeep/internal/pkg/message"
+	"github.com/ferdiebergado/gojeep/internal/service/mock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

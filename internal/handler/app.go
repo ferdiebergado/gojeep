@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/ferdiebergado/goexpress"
-	"github.com/ferdiebergado/goweb/internal/config"
-	"github.com/ferdiebergado/goweb/internal/pkg/security"
-	"github.com/ferdiebergado/goweb/internal/repository"
-	"github.com/ferdiebergado/goweb/internal/service"
+	"github.com/ferdiebergado/gojeep/internal/config"
+	"github.com/ferdiebergado/gojeep/internal/pkg/security"
+	"github.com/ferdiebergado/gojeep/internal/repository"
+	"github.com/ferdiebergado/gojeep/internal/service"
 	"github.com/go-playground/validator/v10"
 )
 

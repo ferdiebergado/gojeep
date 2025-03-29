@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ferdiebergado/goweb/internal/repository/mock"
-	"github.com/ferdiebergado/goweb/internal/service"
+	"github.com/ferdiebergado/gojeep/internal/repository/mock"
+	"github.com/ferdiebergado/gojeep/internal/service"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

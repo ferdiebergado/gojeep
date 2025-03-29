@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/ferdiebergado/goexpress"
-	"github.com/ferdiebergado/goweb/internal/config"
-	"github.com/ferdiebergado/goweb/internal/handler"
+	"github.com/ferdiebergado/gojeep/internal/config"
+	"github.com/ferdiebergado/gojeep/internal/handler"
 	"github.com/stretchr/testify/assert"
 )
 

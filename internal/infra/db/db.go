@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/ferdiebergado/goweb/internal/config"
+	"github.com/ferdiebergado/gojeep/internal/config"
 )
 
 func Connect(ctx context.Context, cfg *config.DBConfig) (*sql.DB, error) {

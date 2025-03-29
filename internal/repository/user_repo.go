@@ -5,7 +5,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/ferdiebergado/goweb/internal/model"
+	"github.com/ferdiebergado/gojeep/internal/model"
 )
 
 type UserRepo interface {

@@ -1,4 +1,4 @@
-module github.com/ferdiebergado/goweb
+module github.com/ferdiebergado/gojeep
 
 go 1.23.0
 

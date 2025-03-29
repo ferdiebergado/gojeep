@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ferdiebergado/goweb/internal/model"
-	"github.com/ferdiebergado/goweb/internal/pkg/security"
-	"github.com/ferdiebergado/goweb/internal/repository"
+	"github.com/ferdiebergado/gojeep/internal/model"
+	"github.com/ferdiebergado/gojeep/internal/pkg/security"
+	"github.com/ferdiebergado/gojeep/internal/repository"
 )
 
 type UserService interface {

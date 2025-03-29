@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ferdiebergado/goweb/internal/model"
-	"github.com/ferdiebergado/goweb/internal/repository"
-	"github.com/ferdiebergado/goweb/internal/repository/mock"
-	"github.com/ferdiebergado/goweb/internal/service"
+	"github.com/ferdiebergado/gojeep/internal/model"
+	"github.com/ferdiebergado/gojeep/internal/repository"
+	"github.com/ferdiebergado/gojeep/internal/repository/mock"
+	"github.com/ferdiebergado/gojeep/internal/service"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	secMock "github.com/ferdiebergado/goweb/internal/pkg/security/mock"
+	secMock "github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
 )
 
 func TestUserService_RegisterUser(t *testing.T) {

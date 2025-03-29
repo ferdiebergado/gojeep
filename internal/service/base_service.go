@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/ferdiebergado/goweb/internal/repository"
+	"github.com/ferdiebergado/gojeep/internal/repository"
 )
 
 type BaseService interface {

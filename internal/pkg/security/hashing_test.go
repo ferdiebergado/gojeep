@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ferdiebergado/goweb/internal/pkg/security"
+	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	"github.com/stretchr/testify/assert"
 )
 

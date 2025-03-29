@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gopherkit/http/response"
-	"github.com/ferdiebergado/goweb/internal/config"
 )
 
 const suffix = ".html"
