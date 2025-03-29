@@ -16,7 +16,7 @@ import (
 	secMock "github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
 )
 
-func TestUserService_RegisterUser(t *testing.T) {
+func TestUserServiceRegisterUser(t *testing.T) {
 	const (
 		testEmail      = "abc@example.com"
 		testPass       = "test"

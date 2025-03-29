@@ -11,7 +11,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func TestService_PingDB(t *testing.T) {
+func TestServicePingDB(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockRepo := mock.NewMockRepository(ctrl)
 	ctx := context.Background()

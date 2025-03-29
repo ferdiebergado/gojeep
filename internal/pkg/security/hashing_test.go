@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestArgon2Hasher_Hash(t *testing.T) {
+func TestArgon2HasherHash(t *testing.T) {
 	hasher := &security.Argon2Hasher{}
 	password := "securepassword"
 
