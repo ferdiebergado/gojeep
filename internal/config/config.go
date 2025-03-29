@@ -75,7 +75,7 @@ func overrideWithEnv(v reflect.Value) {
 		return
 	}
 	typeOfV := v.Type()
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		field := v.Field(i)
 		structField := typeOfV.Field(i)
 		if field.Kind() == reflect.Struct {
