@@ -1,0 +1,71 @@
+/* utilities/colors.css */
+
+:root {
+	--primary-color: #007bff;
+	--secondary-color: #6c757d;
+	--success-color: #28a745;
+	--danger-color: #dc3545;
+	--warning-color: #ffc107;
+	--info-color: #17a2b8;
+	--light-color: #f8f9fa;
+	--dark-color: #343a40;
+	--text-color: #333;
+	--background-color: #f9f9f9;
+}
+
+.text-primary {
+	color: var(--primary-color);
+}
+.text-secondary {
+	color: var(--secondary-color);
+}
+.text-success {
+	color: var(--success-color);
+}
+.text-danger {
+	color: var(--danger-color);
+}
+.text-warning {
+	color: var(--warning-color);
+}
+.text-info {
+	color: var(--info-color);
+}
+.text-light {
+	color: var(--light-color);
+}
+.text-dark {
+	color: var(--dark-color);
+}
+
+.bg-primary {
+	background-color: var(--primary-color);
+	color: white;
+}
+.bg-secondary {
+	background-color: var(--secondary-color);
+	color: white;
+}
+.bg-success {
+	background-color: var(--success-color);
+	color: white;
+}
+.bg-danger {
+	background-color: var(--danger-color);
+	color: white;
+}
+bg-warning {
+	background-color: var(--warning-color);
+	color: black;
+}
+bg-info {
+	background-color: var(--info-color);
+	color: white;
+}
+bg-light {
+	background-color: var(--light-color);
+}
+bg-dark {
+	background-color: var(--dark-color);
+	color: white;
+}

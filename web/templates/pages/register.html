@@ -1,0 +1,73 @@
+{{define "content"}}
+<div x-data="regForm">
+  <div class="container" style="width: clamp(400px, 400px, 100%)">
+    {{template "alert"}}
+    <h2 id="registerForm">Register</h2>
+    <form @submit.prevent="submit" aria-labelledby="registerForm">
+      <div class="form-group">
+        <div class="input-group">
+          <i class="fas fa-envelope"></i>
+          <input
+            type="email"
+            id="email"
+            :class="errors.email ? 'has-error':''"
+            x-model="data.email"
+            placeholder="Email"
+            aria-describedby="emailError"
+            aria-required="true"
+            autocomplete="email"
+            autofocus
+          />
+        </div>
+        <div
+          id="emailError"
+          class="error"
+          x-show="errors.email"
+          x-text="errors.email"
+        ></div>
+      </div>
+      <div class="form-group">
+        <div class="input-group">
+          <i class="fas fa-lock"></i>
+          <input
+            type="password"
+            id="password"
+            :class="errors.password ? 'has-error':''"
+            x-model="data.password"
+            placeholder="Password"
+            aria-describedby="passwordError"
+            aria-required="true"
+          />
+        </div>
+        <div
+          id="passwordError"
+          class="error"
+          x-show="errors.password"
+          x-text="errors.password"
+        ></div>
+      </div>
+      <div class="form-group">
+        <div class="input-group">
+          <i class="fas fa-lock"></i>
+          <input
+            type="password"
+            id="passwordConfirm"
+            :class="errors.password_confirm ? 'has-error':''"
+            x-model="data.password_confirm"
+            placeholder="Retype password"
+            aria-describedby="passwordConfirmError"
+            aria-required="true"
+          />
+        </div>
+        <div
+          id="passwordConfirmError"
+          class="error"
+          x-show="errors.password_confirm"
+          x-text="errors.password_confirm"
+        ></div>
+      </div>
+      {{template "submit"}}
+    </form>
+  </div>
+</div>
+{{end}}

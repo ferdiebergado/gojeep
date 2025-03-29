@@ -1,0 +1,33 @@
+{
+  "app": {
+    "env": "development",
+    "is_debug": false
+  },
+  "db": {
+    "driver": "pgx",
+    "host": "localhost",
+    "port": 5432,
+    "user": "gopher",
+    "pass": "gopherhole",
+    "db": "goweb",
+    "ssl_mode": "require",
+    "ping_timeout": 10,
+    "max_open_conns": 20,
+    "max_idle_conns": 10,
+    "conn_max_lifetime": 300,
+    "conn_max_idle_time": 60
+  },
+  "server": {
+    "port": 8080,
+    "read_timeout": 5,
+    "write_timeout": 10,
+    "idle_timeout": 60,
+    "shutdown_timeout": 5
+  },
+  "template": {
+    "path": "web/templates",
+    "layout_file": "layout.html",
+    "partials_path": "partials",
+    "pages_path": "pages"
+  }
+}

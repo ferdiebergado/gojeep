@@ -1,0 +1,70 @@
+/* components/forms.css */
+
+.form-group {
+	margin-bottom: 1rem;
+}
+
+label {
+	display: block;
+	margin-bottom: 0.5rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+	outline: none;
+	border-color: var(--primary-color);
+	box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.form-control-sm {
+	padding: 5px;
+	font-size: 0.875rem;
+}
+
+.form-control-lg {
+	padding: 15px;
+	font-size: 1.25rem;
+}
+
+.input-group {
+	position: relative;
+}
+
+.input-group input {
+	padding-left: 35px; /* Adjust padding to accommodate the icon */
+}
+
+.input-group i {
+	position: absolute;
+	left: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #999;
+}
+
+.form-group input.has-error,
+.form-group textarea.has-error,
+.form-group select.has-error {
+	border: 1px solid red;
+}
+
+.error {
+	color: red;
+	padding-left: 1ch;
+	margin-top: 0.5rem;
+	font-size: 0.8rem;
+}

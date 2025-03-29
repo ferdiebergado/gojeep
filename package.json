@@ -1,0 +1,32 @@
+{
+  "name": "goweb",
+  "version": "0.0.1",
+  "description": "frontend for goweb",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/ferdiebergado/goweb"
+  },
+  "keywords": [
+    "go",
+    "web"
+  ],
+  "author": "Ferdinand Saporas Bergado <ferdiebergado@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/css": "^0.5.0",
+    "@eslint/js": "^9.21.0",
+    "@types/alpinejs": "^3.13.11",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.21.0",
+    "globals": "^16.0.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.25.0"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.8"
+  }
+}

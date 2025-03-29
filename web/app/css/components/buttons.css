@@ -1,0 +1,49 @@
+/* components/buttons.css */
+
+.btn {
+	display: inline-block;
+	padding: 10px 20px;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+	background-color: var(--primary-color);
+	color: white;
+}
+.btn-secondary {
+	background-color: var(--secondary-color);
+	color: white;
+}
+.btn-success {
+	background-color: var(--success-color);
+	color: white;
+}
+.btn-danger {
+	background-color: var(--danger-color);
+	color: white;
+}
+.btn-warning {
+	background-color: var(--warning-color);
+	color: black;
+}
+.btn-info {
+	background-color: var(--info-color);
+	color: white;
+}
+.btn-light {
+	background-color: var(--light-color);
+}
+.btn-dark {
+	background-color: var(--dark-color);
+	color: white;
+}
+
+.btn-primary:hover {
+	background-color: #0056b3;
+}
+/* Similar hover effects for other buttons */
