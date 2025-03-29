@@ -87,7 +87,7 @@ func (h *UserHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request)
 	user, err := h.service.RegisterUser(r.Context(), params)
 	if err != nil {
 		if errors.Is(err, service.ErrDuplicateUser) {
-			unprocessableError(w, r, err)
+			unprocessableResponse(w, r, err)
 			return
 		}
 		response.ServerError(w, r, err)

@@ -8,7 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func validationError(w http.ResponseWriter, r *http.Request, err error) {
+func invalidInputResponse(w http.ResponseWriter, r *http.Request, err error) {
 	errs := make(map[string]string, 0)
 
 	for _, e := range err.(validator.ValidationErrors) {

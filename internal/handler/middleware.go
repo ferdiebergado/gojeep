@@ -22,14 +22,14 @@ func DecodeJSON[T any]() goexpress.Middleware {
 				decoder := json.NewDecoder(r.Body)
 				decoder.DisallowUnknownFields()
 				if err := decoder.Decode(&decoded); err != nil {
-					badRequestError(w, r, err)
+					badRequestResponse(w, r, err)
 					return
 				}
 				ctx := NewParamsContext(r.Context(), decoded)
 				r = r.WithContext(ctx)
 				next.ServeHTTP(w, r)
 			} else {
-				badRequestError(w, r, fmt.Errorf("Invalid content-type: %s", contentType))
+				badRequestResponse(w, r, fmt.Errorf("Invalid content-type: %s", contentType))
 			}
 		})
 	}
@@ -43,12 +43,12 @@ func ValidateInput[T any](validate *validator.Validate) goexpress.Middleware {
 
 			if !ok {
 				var t T
-				badRequestError(w, r, fmt.Errorf("cannot type assert context value %v to %T", ctxVal, t))
+				badRequestResponse(w, r, fmt.Errorf("cannot type assert context value %v to %T", ctxVal, t))
 				return
 			}
 
 			if err := validate.Struct(params); err != nil {
-				validationError(w, r, err)
+				invalidInputResponse(w, r, err)
 				return
 			}
 
