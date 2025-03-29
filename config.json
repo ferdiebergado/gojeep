@@ -9,7 +9,7 @@
     "port": 5432,
     "user": "gopher",
     "pass": "gopherhole",
-    "db": "goweb",
+    "db": "gojeep",
     "ssl_mode": "require",
     "ping_timeout": 10,
     "max_open_conns": 20,
@@ -23,11 +23,5 @@
     "write_timeout": 10,
     "idle_timeout": 60,
     "shutdown_timeout": 5
-  },
-  "template": {
-    "path": "web/templates",
-    "layout_file": "layout.html",
-    "partials_path": "partials",
-    "pages_path": "pages"
   }
 }
