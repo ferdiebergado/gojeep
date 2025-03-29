@@ -1,5 +1,5 @@
 # Project Name (adjust as needed)
-PROJECT_NAME = goweb
+PROJECT_NAME = gojeep
 
 # Binary Name
 BINARY_NAME = $(PROJECT_NAME)
@@ -11,7 +11,7 @@ GO_MODULE_PATH = ./...  # Or specify specific packages like: ./api/... ./web/...
 BUILD_DIR = build
 
 # Versioning (you can automate this later)
-VERSION = v0.1.0
+VERSION = v0.0.1
 
 # Go Flags (e.g., for race detector)
 GO_FLAGS = -race
@@ -20,7 +20,7 @@ GO_FLAGS = -race
 CONTAINER_RUNTIME := $(shell if command -v podman >/dev/null 2>&1; then echo podman; elif command -v docker >/dev/null 2>&1; then echo docker; else echo ""; fi)
 
 # Container name of the postgres database
-DB_CONTAINER = gowebdb
+DB_CONTAINER = gojeepdb
 
 # Path for db migrations
 MIGRATIONS_DIR = ./db/migrations
@@ -43,7 +43,7 @@ default:
 build:
 	@echo "Building $(BINARY_NAME) $(VERSION)..."
 	@mkdir -p $(BUILD_DIR)
-	@go build $(GO_FLAGS) -ldflags="-X main.version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/web/...
+	@go build $(GO_FLAGS) -ldflags="-X main.version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/server/...
 	@echo "Build complete!"
 
 ## run: Run the project
