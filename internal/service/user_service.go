@@ -6,8 +6,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/ferdiebergado/gojeep/internal/model"
+	"github.com/ferdiebergado/gojeep/internal/pkg/email"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	"github.com/ferdiebergado/gojeep/internal/repository"
 )
@@ -57,6 +59,16 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 	if err != nil {
 		return nil, fmt.Errorf("create user %s: %w", params.Email, err)
 	}
+
+	go func() {
+		slog.Info("Sending verification email...")
+		const title = "Email verification"
+		const subject = "Verify your email"
+		data := map[string]string{"Title": title, "Header": subject}
+		if err := email.SendHTMLEmail([]string{user.Email}, subject, "verification", data); err != nil {
+			slog.Error("failed to send email", "reason", err)
+		}
+	}()
 
 	return user, nil
 }
