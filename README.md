@@ -1,5 +1,7 @@
 # gojeep 🚙 – A Minimalist Go REST API Starter Kit
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/ferdiebergado/gojeep)](https://goreportcard.com/report/github.com/ferdiebergado/gojeep)
+
 **gojeep** is a lightweight and efficient Go REST API starter kit inspired by the iconic **jeepney**—fast, reliable, and built for the long haul. Designed with simplicity in mind, it follows Go’s standard library-first approach, avoiding unnecessary dependencies while providing a solid foundation for building RESTful services.
 
 ## Features
