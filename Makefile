@@ -84,8 +84,6 @@ docker-check:
 			echo "Docker is NOT running.  Please start it."; \
 			exit 1; \
 		fi; \
-	else \
-                echo "Container runtime is not Docker. Skipping Docker daemon check."; \
 	fi
 	@echo "Detected container runtime is $(CONTAINER_RUNTIME)."
 
