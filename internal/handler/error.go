@@ -10,7 +10,6 @@ import (
 
 func badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
 	errorResponse(w, r, http.StatusBadRequest, err, "Invalid input.")
-
 }
 
 func unprocessableResponse(w http.ResponseWriter, r *http.Request, err error) {
@@ -19,13 +18,8 @@ func unprocessableResponse(w http.ResponseWriter, r *http.Request, err error) {
 
 func errorResponse(w http.ResponseWriter, r *http.Request, status int, err error, msg string) {
 	slog.Error("server error", "reason", err, "request", fmt.Sprint(r))
-
-	if r.Header.Get(HeaderContentType) == MimeJSON {
-		res := Response[any]{
-			Message: msg,
-		}
-		response.JSON(w, r, status, res)
-		return
+	res := Response[any]{
+		Message: msg,
 	}
-	http.Error(w, http.StatusText(status), status)
+	response.JSON(w, r, status, res)
 }
