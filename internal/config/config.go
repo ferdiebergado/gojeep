@@ -73,8 +73,11 @@ func LoadConfig(path string) (*Config, error) {
 
 	overrideWithEnv(reflect.ValueOf(&config).Elem())
 
+	const mask = "*"
 	cfgCopy := config
-	cfgCopy.Db.Pass = "*"
+	cfgCopy.Db.Pass = mask
+	cfgCopy.Email.From = mask
+	cfgCopy.Email.Password = mask
 
 	slog.Debug("loadconfig", slog.Any("config", cfgCopy))
 
