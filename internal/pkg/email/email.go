@@ -18,7 +18,6 @@ import (
 type templateMap map[string]*template.Template
 
 type Mailer interface {
-	Send(to []string, subject string, body string, contentType string) error
 	SendPlain(to []string, subject string, body string) error
 	SendHTML(to []string, subject string, tmplName string, data map[string]string) error
 }
@@ -54,7 +53,7 @@ func New(cfg *config.Config) (Mailer, error) {
 	}, nil
 }
 
-func (e *mailer) Send(to []string, subject string, body string, contentType string) error {
+func (e *mailer) send(to []string, subject string, body string, contentType string) error {
 	from := e.from
 	host := e.host
 	auth := smtp.PlainAuth(
@@ -93,11 +92,11 @@ func (e *mailer) SendHTML(to []string, subject string, tmplName string, data map
 		return err
 	}
 
-	return e.Send(to, subject, buf.String(), "text/html")
+	return e.send(to, subject, buf.String(), "text/html")
 }
 
 func (e *mailer) SendPlain(to []string, subject string, body string) error {
-	return e.Send(to, subject, body, "text/plain")
+	return e.send(to, subject, body, "text/plain")
 }
 
 func parsePages(templateDir string, layoutTmpl *template.Template) (templateMap, error) {
