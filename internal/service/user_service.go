@@ -21,15 +21,17 @@ type UserService interface {
 type userService struct {
 	repo   repository.UserRepo
 	hasher security.Hasher
+	mailer email.Mailer
 }
 
 var _ UserService = (*userService)(nil)
 var ErrDuplicateUser = errors.New("duplicate user")
 
-func NewUserService(repo repository.UserRepo, hasher security.Hasher) UserService {
+func NewUserService(repo repository.UserRepo, hasher security.Hasher, mailer email.Mailer) UserService {
 	return &userService{
 		repo:   repo,
 		hasher: hasher,
+		mailer: mailer,
 	}
 }
 
@@ -49,13 +51,11 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 	}
 
 	hash, err := s.hasher.Hash(params.Password)
-
 	if err != nil {
 		return nil, fmt.Errorf("hasher hash: %w", err)
 	}
 
 	user, err := s.repo.CreateUser(ctx, repository.CreateUserParams{Email: params.Email, PasswordHash: hash})
-
 	if err != nil {
 		return nil, fmt.Errorf("create user %s: %w", params.Email, err)
 	}
@@ -65,7 +65,7 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 		const title = "Email verification"
 		const subject = "Verify your email"
 		data := map[string]string{"Title": title, "Header": subject}
-		if err := email.SendHTMLEmail([]string{user.Email}, subject, "verification", data); err != nil {
+		if err := s.mailer.SendHTML([]string{user.Email}, subject, "verification", data); err != nil {
 			slog.Error("failed to send email", "reason", err)
 		}
 	}()

@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"database/sql"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	mailMock "github.com/ferdiebergado/gojeep/internal/pkg/email/mock"
 	secMock "github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
 )
 
@@ -25,6 +27,7 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockRepo := mock.NewMockUserRepo(ctrl)
 	mockHasher := secMock.NewMockHasher(ctrl)
+	mockMailer := mailMock.NewMockMailer(ctrl)
 
 	regParams := service.RegisterUserParams{
 		Email:    testEmail,
@@ -42,13 +45,24 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	}
 
 	mockRepo.EXPECT().FindUserByEmail(context.Background(), testEmail).Return(nil, sql.ErrNoRows)
-
 	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
+	// TODO: move strings to message package
+	const title = "Email verification"
+	const subject = "Verify your email"
+	const tmpl = "verification"
+	data := map[string]string{"Title": title, "Header": subject}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	mockMailer.EXPECT().SendHTML([]string{testEmail}, subject, tmpl, data).Do(func(to []string, subj, tmplName string, data map[string]string) {
+		defer wg.Done()
+	})
 
 	ctx := context.Background()
 	mockRepo.EXPECT().CreateUser(ctx, params).Return(user, nil)
 
-	userService := service.NewUserService(mockRepo, mockHasher)
+	userService := service.NewUserService(mockRepo, mockHasher, mockMailer)
 
 	newUser, err := userService.RegisterUser(ctx, regParams)
 	assert.NoError(t, err)
@@ -57,4 +71,6 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	assert.Equal(t, params.Email, newUser.Email, "Emails must match")
 	assert.NotZero(t, newUser.CreatedAt)
 	assert.NotZero(t, newUser.UpdatedAt)
+
+	wg.Wait()
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/handler"
 	"github.com/ferdiebergado/gojeep/internal/infra/db"
+	"github.com/ferdiebergado/gojeep/internal/pkg/email"
 	"github.com/ferdiebergado/gojeep/internal/pkg/environment"
 	"github.com/ferdiebergado/gojeep/internal/pkg/logging"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
@@ -113,6 +114,10 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 	router := goexpress.New()
 	validate = validation.New()
 	hasher := &security.Argon2Hasher{}
+	mailer, err := email.New(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	deps := &handler.AppDependencies{
 		Config:    cfg,
@@ -120,6 +125,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 		Router:    router,
 		Validator: validate,
 		Hasher:    hasher,
+		Mailer:    mailer,
 	}
 	return deps, nil
 }

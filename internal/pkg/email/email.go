@@ -1,3 +1,4 @@
+//go:generate mockgen -destination=mock/mailer_mock.go -package=mock . Mailer
 package email
 
 import (
@@ -11,74 +12,69 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ferdiebergado/gopherkit/env"
+	"github.com/ferdiebergado/gojeep/internal/config"
 )
-
-const suffix = ".html"
 
 type templateMap map[string]*template.Template
 
-type TemplateConfig struct {
-	Path       string
-	PagesPath  string
-	LayoutFile string
+type Mailer interface {
+	Send(to []string, subject string, body string, contentType string) error
+	SendPlain(to []string, subject string, body string) error
+	SendHTML(to []string, subject string, tmplName string, data map[string]string) error
 }
 
-type Config struct {
-	From     string
-	To       string
-	Pass     string
-	Host     string
-	Port     int
-	Template TemplateConfig
-}
-
-type Email struct {
+type mailer struct {
 	from      string
-	to        string
 	pass      string
 	host      string
 	port      int
 	templates templateMap
 }
 
-func New(cfg Config) (*Email, error) {
-	path := cfg.Template.Path
-	pagesPath := cfg.Template.PagesPath
-	layoutFile := filepath.Join(path, cfg.Template.LayoutFile)
+var _ Mailer = (*mailer)(nil)
+
+func New(cfg *config.Config) (Mailer, error) {
+	tmplCfg := cfg.Template
+	path := tmplCfg.Path
+	layoutFile := filepath.Join(path, tmplCfg.LayoutFile)
 	layoutTmpl := template.Must(template.New("layout").ParseFiles(layoutFile))
-	tmplMap, err := parsePages(path, pagesPath, layoutTmpl)
+	tmplMap, err := parsePages(path, layoutTmpl)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Email{
+	emailCfg := cfg.Email
+
+	return &mailer{
+		from:      emailCfg.From,
+		pass:      emailCfg.Password,
+		host:      emailCfg.Host,
+		port:      emailCfg.Port,
 		templates: tmplMap,
 	}, nil
 }
 
-func (e *Email) Send(to []string, subject string, body string, contentType string) error {
-	from := env.MustGet("SMTP_FROM")
-	pass := env.MustGet("SMTP_PASSWORD")
-	host := env.MustGet("SMTP_HOST")
-	port := env.MustGet("SMTP_PORT")
-
+func (e *mailer) Send(to []string, subject string, body string, contentType string) error {
+	from := e.from
+	host := e.host
 	auth := smtp.PlainAuth(
 		"",
 		from,
-		pass,
+		e.pass,
 		host,
 	)
 
-	headers := "To: " + to[0] + "\r\n" +
+	recipients := strings.Join(to, ", ")
+	headers := "To: " + recipients + "\r\n" +
 		"MIME-version: 1.0\r\n" +
 		"Subject: " + subject + "\r\n" +
-		"Content-Type: " + contentType + "; charset=\"UTF-8\"" + "\r\n\r\n"
+		"Content-Type: " + contentType + "; charset=\"UTF-8\"\r\n\r\n"
 
 	message := headers + body
+	addr := fmt.Sprintf("%s:%d", host, e.port)
 
 	return smtp.SendMail(
-		host+":"+port,
+		addr,
 		auth,
 		from,
 		to,
@@ -86,7 +82,7 @@ func (e *Email) Send(to []string, subject string, body string, contentType strin
 	)
 }
 
-func (e *Email) SendHTML(to []string, subject string, tmplName string, data map[string]string) error {
+func (e *mailer) SendHTML(to []string, subject string, tmplName string, data map[string]string) error {
 	tmpl, ok := e.templates[tmplName]
 	if !ok {
 		return fmt.Errorf("template does not exist: %s", tmplName)
@@ -100,18 +96,20 @@ func (e *Email) SendHTML(to []string, subject string, tmplName string, data map[
 	return e.Send(to, subject, buf.String(), "text/html")
 }
 
-func (e *Email) SendPlain(to []string, subject string, body string) error {
+func (e *mailer) SendPlain(to []string, subject string, body string) error {
 	return e.Send(to, subject, body, "text/plain")
 }
 
-func parsePages(templateDir, pagesDir string, layoutTmpl *template.Template) (templateMap, error) {
+func parsePages(templateDir string, layoutTmpl *template.Template) (templateMap, error) {
 	tmplMap := make(templateMap)
-	err := fs.WalkDir(os.DirFS(templateDir), pagesDir, func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(os.DirFS(templateDir), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
+
+		const suffix = ".html"
 		if !d.IsDir() && strings.HasSuffix(path, suffix) {
-			name := strings.TrimPrefix(path, pagesDir+"/")
+			name := strings.TrimPrefix(path, "/")
 			name = strings.TrimSuffix(name, suffix)
 			tmplMap[name] = template.Must(template.Must(layoutTmpl.Clone()).ParseFiles(filepath.Join(templateDir, path)))
 			slog.Debug("parsed page", "path", path, "name", name)

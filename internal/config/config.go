@@ -38,10 +38,24 @@ type ServerConfig struct {
 	ShutdownTimeout int `json:"shutdown_timeout,omitempty"`
 }
 
+type TemplateConfig struct {
+	Path       string `json:"path,omitempty"`
+	LayoutFile string `json:"layout_file,omitempty"`
+}
+
+type EmailConfig struct {
+	From     string `json:"from,omitempty" env:"SMTP_FROM"`
+	Password string `json:"password,omitempty" env:"SMTP_PASSWORD"`
+	Host     string `json:"host,omitempty" env:"SMTP_HOST"`
+	Port     int    `json:"port,omitempty" env:"SMTP_PORT"`
+}
+
 type Config struct {
-	App    EnvConfig    `json:"app,omitempty"`
-	Db     DBConfig     `json:"db,omitempty"`
-	Server ServerConfig `json:"server,omitempty"`
+	App      EnvConfig      `json:"app,omitempty"`
+	Db       DBConfig       `json:"db,omitempty"`
+	Server   ServerConfig   `json:"server,omitempty"`
+	Email    EmailConfig    `json:"email,omitempty"`
+	Template TemplateConfig `json:"template,omitempty"`
 }
 
 func LoadConfig(path string) (*Config, error) {

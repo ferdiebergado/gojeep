@@ -23,5 +23,15 @@
     "write_timeout": 10,
     "idle_timeout": 60,
     "shutdown_timeout": 5
+  },
+  "email": {
+    "from": "gojeep@gmail.com",
+    "password": "generateappspassword",
+    "host": "smtp.gmail.com",
+    "port": 587
+  },
+  "template": {
+    "path": "web/templates",
+    "layout_file": "base.html"
   }
 }

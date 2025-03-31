@@ -5,6 +5,7 @@ import (
 
 	"github.com/ferdiebergado/goexpress"
 	"github.com/ferdiebergado/gojeep/internal/config"
+	"github.com/ferdiebergado/gojeep/internal/pkg/email"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	"github.com/ferdiebergado/gojeep/internal/repository"
 	"github.com/ferdiebergado/gojeep/internal/service"
@@ -17,6 +18,7 @@ type App struct {
 	router    *goexpress.Router
 	validater *validator.Validate
 	hasher    security.Hasher
+	mailer    email.Mailer
 }
 
 type AppDependencies struct {
@@ -25,6 +27,7 @@ type AppDependencies struct {
 	Router    *goexpress.Router
 	Validator *validator.Validate
 	Hasher    security.Hasher
+	Mailer    email.Mailer
 }
 
 func NewApp(deps *AppDependencies) *App {
@@ -34,6 +37,7 @@ func NewApp(deps *AppDependencies) *App {
 		router:    deps.Router,
 		validater: deps.Validator,
 		hasher:    deps.Hasher,
+		mailer:    deps.Mailer,
 	}
 	app.SetupMiddlewares()
 	return app
@@ -50,7 +54,7 @@ func (a *App) SetupMiddlewares() {
 
 func (a *App) SetupRoutes() {
 	repo := repository.NewRepository(a.db)
-	svc := service.NewService(repo, a.hasher)
+	svc := service.NewService(repo, a.hasher, a.mailer)
 
 	apiHandler := NewHandler(*svc)
 	mountAPIRoutes(a.router, apiHandler, a.validater)
