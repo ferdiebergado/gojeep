@@ -44,10 +44,10 @@ type TemplateConfig struct {
 }
 
 type EmailConfig struct {
-	From     string `json:"from,omitempty" env:"SMTP_FROM"`
-	Password string `json:"password,omitempty" env:"SMTP_PASSWORD"`
-	Host     string `json:"host,omitempty" env:"SMTP_HOST"`
-	Port     int    `json:"port,omitempty" env:"SMTP_PORT"`
+	From     string `json:"from,omitempty" env:"EMAIL_FROM"`
+	Password string `json:"password,omitempty" env:"EMAIL_PASSWORD"`
+	Host     string `json:"host,omitempty" env:"EMAIL_HOST"`
+	Port     int    `json:"port,omitempty" env:"EMAIL_PORT"`
 }
 
 type Config struct {
