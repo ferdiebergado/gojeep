@@ -10,7 +10,7 @@ import (
 )
 
 type Signer interface {
-	Sign(subject string, audience []string, duration string) (string, error)
+	Sign(subject string, audience []string, duration time.Duration) (string, error)
 	Verify(tokenString string) (string, error)
 }
 
@@ -28,20 +28,16 @@ func NewSigner(cfg config.JWTConfig) Signer {
 	}
 }
 
-func (j *signer) Sign(subject string, audience []string, duration string) (string, error) {
+func (j *signer) Sign(subject string, audience []string, duration time.Duration) (string, error) {
 	id, err := GenerateRandomBytesEncoded(j.cfg.KeyLen)
 	if err != nil {
 		return "", err
 	}
 
 	now := time.Now()
-	ttl, err := time.ParseDuration(duration)
-	if err != nil {
-		return "", err
-	}
 
 	claims := &jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
+		ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
 		IssuedAt:  jwt.NewNumericDate(now),
 		NotBefore: jwt.NewNumericDate(now),
 		Issuer:    j.cfg.Issuer,

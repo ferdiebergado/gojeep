@@ -2,13 +2,16 @@ package security_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	"github.com/stretchr/testify/assert"
 )
 
-var audience = []string{"localhost/verify"}
+const aud = "localhost/verify"
+
+var audience = []string{aud}
 
 func TestJWTSignAndVerify(t *testing.T) {
 	cfg := config.JWTConfig{
@@ -19,7 +22,7 @@ func TestJWTSignAndVerify(t *testing.T) {
 	jwtHandler := security.NewSigner(cfg)
 
 	subject := "testuser"
-	ttl := "24h"
+	ttl := 24 * time.Hour
 	tokenString, err := jwtHandler.Sign(subject, audience, ttl)
 	assert.NoError(t, err)
 
@@ -50,8 +53,7 @@ func TestJWTVerifyModifiedToken(t *testing.T) {
 	jwtHandler := security.NewSigner(cfg)
 
 	subject := "testuser"
-	audience := []string{"localhost/verify"}
-	ttl := "24h"
+	ttl := 24 * time.Hour
 
 	tokenString, err := jwtHandler.Sign(subject, audience, ttl)
 	assert.NoError(t, err)
@@ -70,8 +72,7 @@ func TestJWTVerifyExpiredToken(t *testing.T) {
 	jwtHandler := security.NewSigner(cfg)
 
 	subject := "testuser"
-	audience := []string{"localhost/verify"}
-	ttl := "-1h"
+	ttl := -1 * time.Hour
 
 	tokenString, err := jwtHandler.Sign(subject, audience, ttl)
 	assert.NoError(t, err)
@@ -89,8 +90,7 @@ func TestJWTVerifyWrongSigningKey(t *testing.T) {
 	jwtHandler := security.NewSigner(cfg)
 
 	subject := "testuser"
-	audience := []string{"localhost/verify"}
-	ttl := "24h"
+	ttl := 24 * time.Hour
 
 	tokenString, err := jwtHandler.Sign(subject, audience, ttl)
 	assert.NoError(t, err)

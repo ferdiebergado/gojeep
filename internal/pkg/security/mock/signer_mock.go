@@ -11,6 +11,7 @@ package mock
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -40,7 +41,7 @@ func (m *MockSigner) EXPECT() *MockSignerMockRecorder {
 }
 
 // Sign mocks base method.
-func (m *MockSigner) Sign(subject string, audience []string, duration string) (string, error) {
+func (m *MockSigner) Sign(subject string, audience []string, duration time.Duration) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Sign", subject, audience, duration)
 	ret0, _ := ret[0].(string)
