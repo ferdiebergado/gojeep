@@ -37,7 +37,6 @@
     "layout_file": "base.html"
   },
   "jwt": {
-    "signing_method": "hs256",
     "signing_key": "GENERATESECUREKEY",
     "key_len": 32,
     "issuer": "https://example.com"

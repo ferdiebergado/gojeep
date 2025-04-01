@@ -1,3 +1,4 @@
+//go:generate mockgen -destination=mock/signer_mock.go -package=mock . Signer
 package security
 
 import (
@@ -14,14 +15,16 @@ type Signer interface {
 }
 
 type signer struct {
-	cfg config.JWTConfig
+	method jwt.SigningMethod
+	cfg    config.JWTConfig
 }
 
 var _ Signer = (*signer)(nil)
 
 func NewSigner(cfg config.JWTConfig) Signer {
 	return &signer{
-		cfg: cfg,
+		method: jwt.SigningMethodHS256,
+		cfg:    cfg,
 	}
 }
 
@@ -47,14 +50,14 @@ func (j *signer) Sign(subject string, audience []string, duration string) (strin
 		Audience:  audience,
 	}
 
-	token := jwt.NewWithClaims(j.cfg.SigningMethod, claims)
+	token := jwt.NewWithClaims(j.method, claims)
 	return token.SignedString([]byte(j.cfg.SigningKey))
 }
 
 func (j *signer) Verify(tokenString string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(_ *jwt.Token) (any, error) {
 		return []byte(j.cfg.SigningKey), nil
-	}, jwt.WithValidMethods([]string{j.cfg.SigningMethod.Alg()}))
+	}, jwt.WithValidMethods([]string{j.method.Alg()}))
 	if err != nil {
 		return "", err
 	}

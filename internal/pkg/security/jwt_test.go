@@ -5,7 +5,6 @@ import (
 
 	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,10 +12,9 @@ var audience = []string{"localhost/verify"}
 
 func TestJWTSignAndVerify(t *testing.T) {
 	cfg := config.JWTConfig{
-		SigningMethod: jwt.SigningMethodHS256,
-		SigningKey:    "CHANGEME",
-		KeyLen:        32,
-		Issuer:        "TEST",
+		SigningKey: "CHANGEME",
+		KeyLen:     32,
+		Issuer:     "TEST",
 	}
 	jwtHandler := security.NewSigner(cfg)
 
@@ -32,10 +30,9 @@ func TestJWTSignAndVerify(t *testing.T) {
 
 func TestJWTVerifyInvalidToken(t *testing.T) {
 	cfg := config.JWTConfig{
-		SigningMethod: jwt.SigningMethodHS256,
-		SigningKey:    "CHANGEME",
-		KeyLen:        32,
-		Issuer:        "TEST",
+		SigningKey: "CHANGEME",
+		KeyLen:     32,
+		Issuer:     "TEST",
 	}
 	jwtHandler := security.NewSigner(cfg)
 
@@ -46,10 +43,9 @@ func TestJWTVerifyInvalidToken(t *testing.T) {
 
 func TestJWTVerifyModifiedToken(t *testing.T) {
 	cfg := config.JWTConfig{
-		SigningMethod: jwt.SigningMethodHS256,
-		SigningKey:    "CHANGEME",
-		KeyLen:        32,
-		Issuer:        "TEST",
+		SigningKey: "CHANGEME",
+		KeyLen:     32,
+		Issuer:     "TEST",
 	}
 	jwtHandler := security.NewSigner(cfg)
 
@@ -67,10 +63,9 @@ func TestJWTVerifyModifiedToken(t *testing.T) {
 
 func TestJWTVerifyExpiredToken(t *testing.T) {
 	cfg := config.JWTConfig{
-		SigningMethod: jwt.SigningMethodHS256,
-		SigningKey:    "CHANGEME",
-		KeyLen:        32,
-		Issuer:        "TEST",
+		SigningKey: "CHANGEME",
+		KeyLen:     32,
+		Issuer:     "TEST",
 	}
 	jwtHandler := security.NewSigner(cfg)
 
@@ -87,10 +82,9 @@ func TestJWTVerifyExpiredToken(t *testing.T) {
 
 func TestJWTVerifyWrongSigningKey(t *testing.T) {
 	cfg := config.JWTConfig{
-		SigningMethod: jwt.SigningMethodHS256,
-		SigningKey:    "CHANGEME",
-		KeyLen:        32,
-		Issuer:        "TEST",
+		SigningKey: "CHANGEME",
+		KeyLen:     32,
+		Issuer:     "TEST",
 	}
 	jwtHandler := security.NewSigner(cfg)
 
@@ -102,37 +96,8 @@ func TestJWTVerifyWrongSigningKey(t *testing.T) {
 	assert.NoError(t, err)
 
 	wrongCfg := config.JWTConfig{
-		SigningMethod: jwt.SigningMethodHS256,
-		SigningKey:    "WRONGKEY",
-		KeyLen:        32,
-	}
-	wrongJwtHandler := security.NewSigner(wrongCfg)
-
-	_, err = wrongJwtHandler.Verify(tokenString)
-	assert.Error(t, err)
-}
-
-func TestJWTVerifyWrongSigningMethod(t *testing.T) {
-	cfg := config.JWTConfig{
-		SigningMethod: jwt.SigningMethodHS256,
-		SigningKey:    "CHANGEME",
-		KeyLen:        32,
-		Issuer:        "TEST",
-	}
-	jwtHandler := security.NewSigner(cfg)
-
-	subject := "testuser"
-	audience := []string{"localhost/verify"}
-	ttl := "24h"
-
-	tokenString, err := jwtHandler.Sign(subject, audience, ttl)
-	assert.NoError(t, err)
-
-	wrongCfg := config.JWTConfig{
-		SigningMethod: jwt.SigningMethodRS256,
-		SigningKey:    "CHANGEME",
-		KeyLen:        32,
-		Issuer:        "TEST",
+		SigningKey: "WRONGKEY",
+		KeyLen:     32,
 	}
 	wrongJwtHandler := security.NewSigner(wrongCfg)
 

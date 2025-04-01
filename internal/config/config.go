@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type AppConfig struct {
@@ -55,10 +53,9 @@ type EmailConfig struct {
 }
 
 type JWTConfig struct {
-	SigningMethod jwt.SigningMethod `json:"signing_method,omitempty"`
-	SigningKey    string            `json:"signing_key,omitempty" env:"APP_KEY"`
-	KeyLen        uint32            `json:"key_len,omitempty"`
-	Issuer        string            `json:"issuer,omitempty" env:"APP_URL"`
+	SigningKey string `json:"signing_key,omitempty" env:"APP_KEY"`
+	KeyLen     uint32 `json:"key_len,omitempty"`
+	Issuer     string `json:"issuer,omitempty" env:"APP_URL"`
 }
 
 type Config struct {
