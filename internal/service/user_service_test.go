@@ -17,6 +17,7 @@ import (
 
 	mailMock "github.com/ferdiebergado/gojeep/internal/pkg/email/mock"
 	secMock "github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
+	srvMock "github.com/ferdiebergado/gojeep/internal/service/mock"
 )
 
 func TestUserServiceRegisterUser(t *testing.T) {
@@ -24,9 +25,11 @@ func TestUserServiceRegisterUser(t *testing.T) {
 		testEmail      = "abc@example.com"
 		testPass       = "test"
 		testPassHashed = "hashed"
+		token          = "testtoken"
 	)
 	ctrl := gomock.NewController(t)
 	mockRepo := mock.NewMockUserRepo(ctrl)
+	mockTokenSvc := srvMock.NewMockTokenService(ctrl)
 	mockHasher := secMock.NewMockHasher(ctrl)
 	mockMailer := mailMock.NewMockMailer(ctrl)
 	mockSigner := secMock.NewMockSigner(ctrl)
@@ -51,16 +54,21 @@ func TestUserServiceRegisterUser(t *testing.T) {
 		t.Fatal("failed to load config", err)
 	}
 	audience := cfg.App.URL + "/verify"
-	ttl := "5m"
+	ttl := 5 * time.Minute
 
-	mockRepo.EXPECT().FindUserByEmail(context.Background(), testEmail).Return(nil, sql.ErrNoRows)
+	ctx := context.Background()
+	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(nil, sql.ErrNoRows)
+	mockTokenSvc.EXPECT().SaveToken(ctx, token, testEmail, ttl)
 	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
-	mockSigner.EXPECT().Sign(testEmail, []string{audience}, ttl).Return("token", nil)
+	mockSigner.EXPECT().Sign(testEmail, []string{audience}, ttl).Return(token, nil)
+
 	// TODO: move strings to message package
-	const title = "Email verification"
-	const subject = "Verify your email"
-	const tmpl = "verification"
-	data := map[string]string{"Title": title, "Header": subject, "Link": audience + "?token=token"}
+	const (
+		title   = "Email verification"
+		subject = "Verify your email"
+		tmpl    = "verification"
+	)
+	data := map[string]string{"Title": title, "Header": subject, "Link": audience + "?token=" + token}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -68,11 +76,9 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	mockMailer.EXPECT().SendHTML([]string{testEmail}, subject, tmpl, data).Do(func(to []string, subj, tmplName string, data map[string]string) {
 		defer wg.Done()
 	})
-
-	ctx := context.Background()
 	mockRepo.EXPECT().CreateUser(ctx, params).Return(user, nil)
 
-	userService := service.NewUserService(mockRepo, mockHasher, mockMailer, mockSigner, cfg.App)
+	userService := service.NewUserService(mockRepo, mockTokenSvc, mockHasher, mockMailer, mockSigner, cfg.App)
 
 	newUser, err := userService.RegisterUser(ctx, regParams)
 	assert.NoError(t, err)

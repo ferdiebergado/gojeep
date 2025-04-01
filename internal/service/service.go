@@ -8,14 +8,17 @@ import (
 )
 
 type Service struct {
-	Base BaseService
-	User UserService
+	Base  BaseService
+	User  UserService
+	Token TokenService
 }
 
 // TODO: refactor arguments into a struct
 func NewService(repo *repository.Repository, hasher security.Hasher, mailer email.Mailer, signer security.Signer, cfg config.AppConfig) *Service {
+	tokenService := NewTokenService(repo.Token)
 	return &Service{
-		Base: NewBaseService(repo.Base),
-		User: NewUserService(repo.User, hasher, mailer, signer, cfg),
+		Base:  NewBaseService(repo.Base),
+		User:  NewUserService(repo.User, tokenService, hasher, mailer, signer, cfg),
+		Token: tokenService,
 	}
 }

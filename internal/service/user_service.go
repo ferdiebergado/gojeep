@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/model"
@@ -20,23 +21,26 @@ type UserService interface {
 }
 
 type userService struct {
-	repo   repository.UserRepo
-	hasher security.Hasher
-	mailer email.Mailer
-	signer security.Signer
-	cfg    config.AppConfig
+	repo     repository.UserRepo
+	tokenSvc TokenService
+	hasher   security.Hasher
+	mailer   email.Mailer
+	signer   security.Signer
+	cfg      config.AppConfig
 }
 
 var _ UserService = (*userService)(nil)
 var ErrDuplicateUser = errors.New("duplicate user")
 
-func NewUserService(repo repository.UserRepo, hasher security.Hasher, mailer email.Mailer, signer security.Signer, cfg config.AppConfig) UserService {
+// TODO: move arguments into a struct
+func NewUserService(repo repository.UserRepo, tokenSvc TokenService, hasher security.Hasher, mailer email.Mailer, signer security.Signer, cfg config.AppConfig) UserService {
 	return &userService{
-		repo:   repo,
-		hasher: hasher,
-		mailer: mailer,
-		signer: signer,
-		cfg:    cfg,
+		repo:     repo,
+		tokenSvc: tokenSvc,
+		hasher:   hasher,
+		mailer:   mailer,
+		signer:   signer,
+		cfg:      cfg,
 	}
 }
 
@@ -65,20 +69,39 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 		return nil, fmt.Errorf("create user %s: %w", params.Email, err)
 	}
 
-	go func() {
-		slog.Info("Sending verification email...")
-		const title = "Email verification"
-		const subject = "Verify your email"
-		audience := s.cfg.URL + "/verify"
-		token, err := s.signer.Sign(user.Email, []string{audience}, "5m")
-		if err != nil {
-			slog.Error("failed to generate token", "reason", err)
-		}
-		data := map[string]string{"Title": title, "Header": subject, "Link": audience + "?token=" + token}
-		if err := s.mailer.SendHTML([]string{user.Email}, subject, "verification", data); err != nil {
-			slog.Error("failed to send email", "reason", err)
-		}
-	}()
+	go s.sendVerificationEmail(user)
 
 	return user, nil
+}
+
+func (s *userService) sendVerificationEmail(user *model.User) {
+	slog.Info("Sending verification email...")
+
+	const (
+		title   = "Email verification"
+		subject = "Verify your email"
+		ttl     = 5 * time.Minute
+	)
+
+	audience := s.cfg.URL + "/verify"
+	token, err := s.signer.Sign(user.Email, []string{audience}, ttl)
+	if err != nil {
+		slog.Error("failed to generate token", "reason", err)
+		return
+	}
+
+	if err := s.tokenSvc.SaveToken(context.Background(), token, user.Email, ttl); err != nil {
+		slog.Error("unable to save token", "reason", err)
+		return
+	}
+
+	data := map[string]string{
+		"Title":  title,
+		"Header": subject,
+		"Link":   audience + "?token=" + token,
+	}
+	if err := s.mailer.SendHTML([]string{user.Email}, subject, "verification", data); err != nil {
+		slog.Error("failed to send email", "reason", err)
+		return
+	}
 }
