@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/model"
 	"github.com/ferdiebergado/gojeep/internal/repository"
 	"github.com/ferdiebergado/gojeep/internal/repository/mock"
@@ -28,6 +29,7 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	mockRepo := mock.NewMockUserRepo(ctrl)
 	mockHasher := secMock.NewMockHasher(ctrl)
 	mockMailer := mailMock.NewMockMailer(ctrl)
+	mockSigner := secMock.NewMockSigner(ctrl)
 
 	regParams := service.RegisterUserParams{
 		Email:    testEmail,
@@ -44,13 +46,21 @@ func TestUserServiceRegisterUser(t *testing.T) {
 		Email: testEmail,
 	}
 
+	cfg, err := config.LoadConfig("../../config.json")
+	if err != nil {
+		t.Fatal("failed to load config", err)
+	}
+	audience := cfg.App.URL + "/verify"
+	ttl := "5m"
+
 	mockRepo.EXPECT().FindUserByEmail(context.Background(), testEmail).Return(nil, sql.ErrNoRows)
 	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
+	mockSigner.EXPECT().Sign(testEmail, []string{audience}, ttl).Return("token", nil)
 	// TODO: move strings to message package
 	const title = "Email verification"
 	const subject = "Verify your email"
 	const tmpl = "verification"
-	data := map[string]string{"Title": title, "Header": subject}
+	data := map[string]string{"Title": title, "Header": subject, "Link": audience + "?token=token"}
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -62,7 +72,7 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	ctx := context.Background()
 	mockRepo.EXPECT().CreateUser(ctx, params).Return(user, nil)
 
-	userService := service.NewUserService(mockRepo, mockHasher, mockMailer)
+	userService := service.NewUserService(mockRepo, mockHasher, mockMailer, mockSigner, cfg.App)
 
 	newUser, err := userService.RegisterUser(ctx, regParams)
 	assert.NoError(t, err)

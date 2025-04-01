@@ -57,7 +57,7 @@ func (a *App) SetupMiddlewares() {
 
 func (a *App) SetupRoutes() {
 	repo := repository.NewRepository(a.db)
-	svc := service.NewService(repo, a.hasher, a.mailer)
+	svc := service.NewService(repo, a.hasher, a.mailer, a.signer, a.cfg.App)
 
 	apiHandler := NewHandler(*svc)
 	mountAPIRoutes(a.router, apiHandler, a.validater)

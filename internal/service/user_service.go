@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/model"
 	"github.com/ferdiebergado/gojeep/internal/pkg/email"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
@@ -22,16 +23,20 @@ type userService struct {
 	repo   repository.UserRepo
 	hasher security.Hasher
 	mailer email.Mailer
+	signer security.Signer
+	cfg    config.AppConfig
 }
 
 var _ UserService = (*userService)(nil)
 var ErrDuplicateUser = errors.New("duplicate user")
 
-func NewUserService(repo repository.UserRepo, hasher security.Hasher, mailer email.Mailer) UserService {
+func NewUserService(repo repository.UserRepo, hasher security.Hasher, mailer email.Mailer, signer security.Signer, cfg config.AppConfig) UserService {
 	return &userService{
 		repo:   repo,
 		hasher: hasher,
 		mailer: mailer,
+		signer: signer,
+		cfg:    cfg,
 	}
 }
 
@@ -64,7 +69,12 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 		slog.Info("Sending verification email...")
 		const title = "Email verification"
 		const subject = "Verify your email"
-		data := map[string]string{"Title": title, "Header": subject}
+		audience := s.cfg.URL + "/verify"
+		token, err := s.signer.Sign(user.Email, []string{audience}, "5m")
+		if err != nil {
+			slog.Error("failed to generate token", "reason", err)
+		}
+		data := map[string]string{"Title": title, "Header": subject, "Link": audience + "?token=" + token}
 		if err := s.mailer.SendHTML([]string{user.Email}, subject, "verification", data); err != nil {
 			slog.Error("failed to send email", "reason", err)
 		}
