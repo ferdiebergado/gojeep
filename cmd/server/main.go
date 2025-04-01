@@ -118,6 +118,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 	if err != nil {
 		return nil, err
 	}
+	signer := security.NewSigner(cfg.JWT)
 
 	deps := &handler.AppDependencies{
 		Config:    cfg,
@@ -126,6 +127,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 		Validator: validate,
 		Hasher:    hasher,
 		Mailer:    mailer,
+		Signer:    signer,
 	}
 	return deps, nil
 }

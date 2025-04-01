@@ -1,5 +1,7 @@
 {
   "app": {
+    "url": "http://localhost:8888",
+    "key": "SECUREKEYHERE",
     "env": "development",
     "is_debug": false
   },
@@ -18,7 +20,7 @@
     "conn_max_idle_time": 60
   },
   "server": {
-    "port": 8080,
+    "port": 8888,
     "read_timeout": 5,
     "write_timeout": 10,
     "idle_timeout": 60,
@@ -26,12 +28,18 @@
   },
   "email": {
     "from": "gojeep@gmail.com",
-    "password": "generateappspassword",
+    "password": "GENERATEAPPSPASSWORD",
     "host": "smtp.gmail.com",
     "port": 587
   },
   "template": {
     "path": "web/templates",
     "layout_file": "base.html"
+  },
+  "jwt": {
+    "signing_method": "hs256",
+    "signing_key": "GENERATESECUREKEY",
+    "key_len": 32,
+    "issuer": "https://example.com"
   }
 }

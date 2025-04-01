@@ -19,6 +19,7 @@ type App struct {
 	validater *validator.Validate
 	hasher    security.Hasher
 	mailer    email.Mailer
+	signer    security.Signer
 }
 
 type AppDependencies struct {
@@ -28,6 +29,7 @@ type AppDependencies struct {
 	Validator *validator.Validate
 	Hasher    security.Hasher
 	Mailer    email.Mailer
+	Signer    security.Signer
 }
 
 func NewApp(deps *AppDependencies) *App {
@@ -38,6 +40,7 @@ func NewApp(deps *AppDependencies) *App {
 		validater: deps.Validator,
 		hasher:    deps.Hasher,
 		mailer:    deps.Mailer,
+		signer:    deps.Signer,
 	}
 	app.SetupMiddlewares()
 	return app

@@ -8,9 +8,13 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
-type EnvConfig struct {
+type AppConfig struct {
+	URL     string `json:"url,omitempty" env:"APP_URL"`
+	Key     string `json:"key,omitempty" env:"APP_KEY"`
 	Env     string `json:"env,omitempty" env:"ENV"`
 	IsDebug bool   `json:"is_debug,omitempty" env:"DEBUG"`
 }
@@ -50,12 +54,20 @@ type EmailConfig struct {
 	Port     int    `json:"port,omitempty" env:"EMAIL_PORT"`
 }
 
+type JWTConfig struct {
+	SigningMethod jwt.SigningMethod `json:"signing_method,omitempty"`
+	SigningKey    string            `json:"signing_key,omitempty" env:"APP_KEY"`
+	KeyLen        uint32            `json:"key_len,omitempty"`
+	Issuer        string            `json:"issuer,omitempty" env:"APP_URL"`
+}
+
 type Config struct {
-	App      EnvConfig      `json:"app,omitempty"`
+	App      AppConfig      `json:"app,omitempty"`
 	Db       DBConfig       `json:"db,omitempty"`
 	Server   ServerConfig   `json:"server,omitempty"`
 	Email    EmailConfig    `json:"email,omitempty"`
 	Template TemplateConfig `json:"template,omitempty"`
+	JWT      JWTConfig      `json:"jwt,omitempty"`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -78,6 +90,7 @@ func LoadConfig(path string) (*Config, error) {
 	cfgCopy.Db.Pass = mask
 	cfgCopy.Email.From = mask
 	cfgCopy.Email.Password = mask
+	cfgCopy.JWT.SigningKey = mask
 
 	slog.Debug("loadconfig", slog.Any("config", cfgCopy))
 
