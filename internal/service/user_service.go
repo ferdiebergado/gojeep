@@ -25,7 +25,6 @@ type userService struct {
 	tokenSvc TokenService
 	hasher   security.Hasher
 	mailer   email.Mailer
-	signer   security.Signer
 	cfg      config.AppConfig
 }
 
@@ -33,13 +32,12 @@ var _ UserService = (*userService)(nil)
 var ErrDuplicateUser = errors.New("duplicate user")
 
 // TODO: move arguments into a struct
-func NewUserService(repo repository.UserRepo, tokenSvc TokenService, hasher security.Hasher, mailer email.Mailer, signer security.Signer, cfg config.AppConfig) UserService {
+func NewUserService(repo repository.UserRepo, tokenSvc TokenService, hasher security.Hasher, mailer email.Mailer, cfg config.AppConfig) UserService {
 	return &userService{
 		repo:     repo,
 		tokenSvc: tokenSvc,
 		hasher:   hasher,
 		mailer:   mailer,
-		signer:   signer,
 		cfg:      cfg,
 	}
 }
@@ -84,7 +82,7 @@ func (s *userService) sendVerificationEmail(user *model.User) {
 	)
 
 	audience := s.cfg.URL + "/verify"
-	token, err := s.signer.Sign(user.Email, []string{audience}, ttl)
+	token, err := s.tokenSvc.Sign(user.Email, []string{audience}, ttl)
 	if err != nil {
 		slog.Error("failed to generate token", "reason", err)
 		return

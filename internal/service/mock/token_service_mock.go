@@ -54,3 +54,33 @@ func (mr *MockTokenServiceMockRecorder) SaveToken(ctx, id, email, ttl any) *gomo
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveToken", reflect.TypeOf((*MockTokenService)(nil).SaveToken), ctx, id, email, ttl)
 }
+
+// Sign mocks base method.
+func (m *MockTokenService) Sign(email string, audience []string, ttl time.Duration) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Sign", email, audience, ttl)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Sign indicates an expected call of Sign.
+func (mr *MockTokenServiceMockRecorder) Sign(email, audience, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sign", reflect.TypeOf((*MockTokenService)(nil).Sign), email, audience, ttl)
+}
+
+// Verify mocks base method.
+func (m *MockTokenService) Verify(tokenString string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Verify", tokenString)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Verify indicates an expected call of Verify.
+func (mr *MockTokenServiceMockRecorder) Verify(tokenString any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Verify", reflect.TypeOf((*MockTokenService)(nil).Verify), tokenString)
+}

@@ -15,10 +15,10 @@ type Service struct {
 
 // TODO: refactor arguments into a struct
 func NewService(repo *repository.Repository, hasher security.Hasher, mailer email.Mailer, signer security.Signer, cfg config.AppConfig) *Service {
-	tokenService := NewTokenService(repo.Token)
+	tokenService := NewTokenService(repo.Token, signer)
 	return &Service{
 		Base:  NewBaseService(repo.Base),
-		User:  NewUserService(repo.User, tokenService, hasher, mailer, signer, cfg),
+		User:  NewUserService(repo.User, tokenService, hasher, mailer, cfg),
 		Token: tokenService,
 	}
 }

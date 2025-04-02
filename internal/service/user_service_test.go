@@ -26,20 +26,23 @@ func TestUserServiceRegisterUser(t *testing.T) {
 		testPass       = "test"
 		testPassHashed = "hashed"
 		token          = "testtoken"
+		title          = "Email verification" // TODO: move strings to message package
+		subject        = "Verify your email"
+		tmpl           = "verification"
 	)
+
 	ctrl := gomock.NewController(t)
 	mockRepo := mock.NewMockUserRepo(ctrl)
 	mockTokenSvc := srvMock.NewMockTokenService(ctrl)
 	mockHasher := secMock.NewMockHasher(ctrl)
 	mockMailer := mailMock.NewMockMailer(ctrl)
-	mockSigner := secMock.NewMockSigner(ctrl)
 
 	regParams := service.RegisterUserParams{
 		Email:    testEmail,
 		Password: testPass,
 	}
 
-	params := repository.CreateUserParams{
+	createParams := repository.CreateUserParams{
 		Email:        regParams.Email,
 		PasswordHash: testPassHashed,
 	}
@@ -53,38 +56,42 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to load config", err)
 	}
+
 	audience := cfg.App.URL + "/verify"
 	ttl := 5 * time.Minute
-
 	ctx := context.Background()
 	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(nil, sql.ErrNoRows)
-	mockTokenSvc.EXPECT().SaveToken(ctx, token, testEmail, ttl)
 	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
-	mockSigner.EXPECT().Sign(testEmail, []string{audience}, ttl).Return(token, nil)
 
-	// TODO: move strings to message package
-	const (
-		title   = "Email verification"
-		subject = "Verify your email"
-		tmpl    = "verification"
-	)
-	data := map[string]string{"Title": title, "Header": subject, "Link": audience + "?token=" + token}
+	data := map[string]string{
+		"Title":  title,
+		"Header": subject,
+		"Link":   audience + "?token=" + token,
+	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(3)
 
 	mockMailer.EXPECT().SendHTML([]string{testEmail}, subject, tmpl, data).Do(func(to []string, subj, tmplName string, data map[string]string) {
 		defer wg.Done()
 	})
-	mockRepo.EXPECT().CreateUser(ctx, params).Return(user, nil)
 
-	userService := service.NewUserService(mockRepo, mockTokenSvc, mockHasher, mockMailer, mockSigner, cfg.App)
+	mockTokenSvc.EXPECT().Sign(testEmail, []string{audience}, ttl).Do(func(string, []string, time.Duration) {
+		defer wg.Done()
+	}).Return(token, nil)
 
+	mockTokenSvc.EXPECT().SaveToken(ctx, token, testEmail, ttl).Do(func(context.Context, string, string, time.Duration) {
+		defer wg.Done()
+	}).Return(nil)
+
+	mockRepo.EXPECT().CreateUser(ctx, createParams).Return(user, nil)
+
+	userService := service.NewUserService(mockRepo, mockTokenSvc, mockHasher, mockMailer, cfg.App)
 	newUser, err := userService.RegisterUser(ctx, regParams)
 	assert.NoError(t, err)
 	assert.NotNil(t, newUser)
 	assert.NotZero(t, newUser.ID)
-	assert.Equal(t, params.Email, newUser.Email, "Emails must match")
+	assert.Equal(t, createParams.Email, newUser.Email, "Emails must match")
 	assert.NotZero(t, newUser.CreatedAt)
 	assert.NotZero(t, newUser.UpdatedAt)
 

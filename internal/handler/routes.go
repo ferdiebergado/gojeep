@@ -10,6 +10,7 @@ func mountAPIRoutes(r *goexpress.Router, h *Handler, v *validator.Validate) {
 		gr.Get("/health", h.Base.HandleHealth)
 		gr.Post("/auth/register", h.User.HandleUserRegister,
 			DecodeJSON[RegisterUserRequest](), ValidateInput[RegisterUserRequest](v))
+		gr.Get("/verify", h.Token.HandleVerifyToken)
 
 		return gr
 	})
