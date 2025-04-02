@@ -23,6 +23,7 @@ go.work.sum
 
 # env file
 .env
+.env.testing
 
 # test coverage
 coverage.out
@@ -32,12 +33,3 @@ build/
 
 # air build dir
 tmp/
-
-# assets
-web/assets/css/**/*
-web/assets/js/**/*
-!web/assets/css/.gitkeep
-!web/assets/js/.gitkeep
-
-# node
-node_modules/
