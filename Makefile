@@ -84,7 +84,7 @@ docker-build:
 
 docker-run:
 	@echo "Running Docker container..."
-	@docker run -p 8080:8080 $(PROJECT_NAME):$(VERSION)  # Adjust port mapping
+	@docker run -p 8080:8080 $(PROJECT_NAME):$(VERSION)
 
 ## db: Starts the database container
 db: docker-check
@@ -110,7 +110,7 @@ psql: db
 lint:
 	@echo "Running golangci-lint..."
 	@command -v golangci-lint>/dev/null || go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.63.4
-	@golangci-lint run $(GO_MODULE_PATH) # Make sure golangci-lint.yml is configured
+	@golangci-lint run $(GO_MODULE_PATH)
 
 format:
 	@echo "Running go fmt..."
@@ -152,24 +152,32 @@ migrate-drop: migrate-check db
 gen:
 	@echo "Generating sources..."
 	@command -v mockgen >/dev/null || go install go.uber.org/mock/mockgen@latest
-	@go generate -v ./...
+	@go generate -v $(GO_MODULE_PATH)
 
 ## tidy: Add missing/Remove unused modules
 tidy:
+	@echo "Adding/removing modules..."
 	@go mod tidy
+
+## update: Update dependencies
+update:
+	@echo "Updating dependencies..."
+	@go get -u $(GO_MODULE_PATH)
 
 vulncheck:
 	@echo "Running govulncheck..."
 	@command -v govulncheck>/dev/null || go install golang.org/x/vuln/cmd/govulncheck@latest
-	@govulncheck ./...
+	@govulncheck $(GO_MODULE_PATH)
 
+## sec: Check for security issues
 sec:
 	@echo "Running gosec..."
 	@command -v gosec>/dev/null || go install github.com/securego/gosec/v2/cmd/gosec@latest
-	@gosec ./...
+	@gosec $(GO_MODULE_PATH)
 
+## check: Check modules for updates
 check:
-	@echo "Checking project..."
+	@echo "Checking for module updates..."
 	@go list -m -u all
 
 clean:
@@ -178,6 +186,7 @@ clean:
 	@rm -f coverage.out
 	@echo "Clean complete!"
 
+## app-key: Generate a new app key
 app-key:
 	@sed -i "s/^APP_KEY=.*/APP_KEY=$$(openssl rand -base64 64 | tr -d '\n' | sed 's/\//_/g')/" .env
 
