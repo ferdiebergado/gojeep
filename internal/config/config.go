@@ -95,37 +95,68 @@ func LoadConfig(path string) (*Config, error) {
 }
 
 func overrideWithEnv(v reflect.Value) {
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	if v.Kind() != reflect.Struct {
+	v = derefPointer(v)
+	if !v.IsValid() || v.Kind() != reflect.Struct {
 		return
 	}
+
 	typeOfV := v.Type()
 	for i := range v.NumField() {
 		field := v.Field(i)
 		structField := typeOfV.Field(i)
-		if field.Kind() == reflect.Struct {
-			overrideWithEnv(field)
+
+		if handleNestedStruct(field) {
 			continue
 		}
-		envTag := structField.Tag.Get("env")
-		if envTag == "" {
-			continue
-		}
-		if envVal, exists := os.LookupEnv(envTag); exists {
-			switch field.Kind() {
-			case reflect.String:
-				field.SetString(envVal)
-			case reflect.Int:
-				if intVal, err := strconv.Atoi(envVal); err == nil {
-					field.SetInt(int64(intVal))
-				}
-			case reflect.Bool:
-				if boolVal, err := strconv.ParseBool(envVal); err == nil {
-					field.SetBool(boolVal)
-				}
-			}
-		}
+
+		processEnvOverride(field, structField.Tag.Get("env"))
+	}
+}
+
+func derefPointer(v reflect.Value) reflect.Value {
+	if v.Kind() == reflect.Ptr {
+		return v.Elem()
+	}
+	return v
+}
+
+func handleNestedStruct(field reflect.Value) bool {
+	if field.Kind() == reflect.Struct {
+		overrideWithEnv(field)
+		return true
+	}
+	return false
+}
+
+func processEnvOverride(field reflect.Value, envTag string) {
+	if envTag == "" {
+		return
+	}
+
+	if envVal, exists := os.LookupEnv(envTag); exists {
+		setFieldFromEnv(field, envVal)
+	}
+}
+
+func setFieldFromEnv(field reflect.Value, envVal string) {
+	switch field.Kind() {
+	case reflect.String:
+		field.SetString(envVal)
+	case reflect.Int:
+		setIntField(field, envVal)
+	case reflect.Bool:
+		setBoolField(field, envVal)
+	}
+}
+
+func setIntField(field reflect.Value, envVal string) {
+	if intVal, err := strconv.Atoi(envVal); err == nil {
+		field.SetInt(int64(intVal))
+	}
+}
+
+func setBoolField(field reflect.Value, envVal string) {
+	if boolVal, err := strconv.ParseBool(envVal); err == nil {
+		field.SetBool(boolVal)
 	}
 }
