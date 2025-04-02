@@ -1,26 +1,27 @@
-# Project Name (adjust as needed)
+# Project Name
 PROJECT_NAME = gojeep
 
 # Binary Name
 BINARY_NAME = $(PROJECT_NAME)
 
-# Go Modules Path (if using Go Modules)
-GO_MODULE_PATH = ./...  # Or specify specific packages like: ./api/... ./web/...
+# Go Modules Path
+GO_MODULE_PATH = ./...
 
 # Build Directory
 BUILD_DIR = build
 
-# Versioning (you can automate this later)
+# Versioning
 VERSION = v0.0.1
 
-# Go Flags (e.g., for race detector)
+# Go Flags
 GO_FLAGS = -race
 
 # Container runtime
 CONTAINER_RUNTIME := $(shell if command -v podman >/dev/null 2>&1; then echo podman; elif command -v docker >/dev/null 2>&1; then echo docker; else echo ""; fi)
 
-# Container name of the postgres database
-DB_CONTAINER = gojeepdb
+# Container of the postgres database
+DB_CONTAINER := gojeepdb
+DB_IMAGE := postgres:17.0-alpine3.20
 
 # Path for db migrations
 MIGRATIONS_DIR = ./db/migrations
@@ -33,11 +34,15 @@ ENV_FILE ?= ./.env
 %:
 	@true
 
-# Build Targets
 ## default: Show usage information
 default:
 	@echo "Usage:"
 	@sed -n 's/^## //p' Makefile | column -t -s ':' --table-columns TARGET," DESCRIPTION"," EXAMPLE"
+
+## dev: Runs the app in development mode
+dev: migrate-up
+	@command -v air >/dev/null || go install github.com/air-verse/air@latest
+	@ENV=development air
 
 ## build: Build the project
 build:
@@ -59,20 +64,6 @@ test:
 test-cover: test
 	@go tool cover -html=coverage.out
 
-clean:
-	@echo "Cleaning up..."
-	@rm -rf $(BUILD_DIR)
-	@rm -f coverage.out
-	@echo "Clean complete!"
-
-docker-build:
-	@echo "Building Docker image..."
-	@docker build -t $(PROJECT_NAME):$(VERSION) .
-
-docker-run:
-	@echo "Running Docker container..."
-	@docker run -p 8080:8080 $(PROJECT_NAME):$(VERSION)  # Adjust port mapping
-
 ## docker-check: Checks if the docker daemon is running.
 docker-check:
 	@if [ -z "$(CONTAINER_RUNTIME)" ]; then \
@@ -87,6 +78,14 @@ docker-check:
 	fi
 	@echo "Detected container runtime is $(CONTAINER_RUNTIME)."
 
+docker-build:
+	@echo "Building Docker image..."
+	@docker build -t $(PROJECT_NAME):$(VERSION) .
+
+docker-run:
+	@echo "Running Docker container..."
+	@docker run -p 8080:8080 $(PROJECT_NAME):$(VERSION)  # Adjust port mapping
+
 ## db: Starts the database container
 db: docker-check
 	@if ! $(CONTAINER_RUNTIME) ps | grep -q $(DB_CONTAINER); then \
@@ -96,7 +95,7 @@ db: docker-check
 		-p 5432:5432 \
 		-v ./configs/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:Z \
 		-v ./configs/postgresql/psqlrc:/root/.psqlrc:Z \
-		--name $(DB_CONTAINER) -d postgres:17.0-alpine3.20 \
+		--name $(DB_CONTAINER) -d $(DB_IMAGE) \
 		-c 'config_file=/etc/postgresql/postgresql.conf'; \
 		sleep 5s; \
 	else \
@@ -173,10 +172,14 @@ check:
 	@echo "Checking project..."
 	@go list -m -u all
 
-## dev: Runs the app in development mode
-dev: migrate-up
-	@command -v air >/dev/null || go install github.com/air-verse/air@latest
-	@ENV=development air
+clean:
+	@echo "Cleaning up..."
+	@rm -rf $(BUILD_DIR)
+	@rm -f coverage.out
+	@echo "Clean complete!"
+
+app-key:
+	@sed -i "s/^APP_KEY=.*/APP_KEY=$$(openssl rand -base64 64 | tr -d '\n' | sed 's/\//_/g')/" .env
 
 prod:
 	@GO_FLAGS=-ldflags="-s -w"
