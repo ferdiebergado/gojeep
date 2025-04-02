@@ -24,10 +24,18 @@ DB_CONTAINER := gojeepdb
 DB_IMAGE := postgres:17.0-alpine3.20
 
 # Path for db migrations
-MIGRATIONS_DIR = ./db/migrations
+MIGRATIONS_DIR := ./db/migrations
 
-# Env file
-ENV_FILE ?= ./.env
+# Env
+ENV ?= development
+
+ifeq ($(ENV),development)
+	ENV_FILE = ./.env
+endif
+
+ifeq ($(ENV),testing)
+	ENV_FILE = ./.env.testing
+endif
 
 .PHONY: $(wildcard *)
 
@@ -42,7 +50,7 @@ default:
 ## dev: Runs the app in development mode
 dev: migrate-up
 	@command -v air >/dev/null || go install github.com/air-verse/air@latest
-	@ENV=development air
+	@air
 
 ## build: Build the project
 build:
@@ -57,7 +65,7 @@ run: build db
 	@$(BUILD_DIR)/$(BINARY_NAME)
 
 ## test: Runs the unit tests
-test:
+test: migrate-up
 	@echo "Running tests..."
 	@go test $(GO_FLAGS) $(GO_MODULE_PATH) -coverprofile=coverage.out
 
@@ -91,7 +99,7 @@ db: docker-check
 	@if ! $(CONTAINER_RUNTIME) ps | grep -q $(DB_CONTAINER); then \
 		echo "Starting database container..."; \
 		$(CONTAINER_RUNTIME) run --rm \
-		--env-file .env \
+		--env-file $(ENV_FILE) \
 		-p 5432:5432 \
 		-v ./configs/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:Z \
 		-v ./configs/postgresql/psqlrc:/root/.psqlrc:Z \
@@ -104,7 +112,7 @@ db: docker-check
 
 ## psql: Opens a session with the database instance
 psql: db
-	@set -a; source $(ENV_FILE); set +a; \
+	@set -a; . $(ENV_FILE); set +a; \
 	$(CONTAINER_RUNTIME) exec -it $(DB_CONTAINER) psql -U $$POSTGRES_USER $$POSTGRES_DB
 
 lint:
@@ -133,19 +141,19 @@ migrate-up: migrate-check db
 ## migrate-down: Rolls back the database migrations
 migrate-down: migrate-check db
 	@echo "Running database migrations (down)..."
-	@set -a; source $(ENV_FILE); set +a; \
+	@set -a; . $(ENV_FILE); set +a; \
 	migrate -path $(MIGRATIONS_DIR) -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@localhost:5432/$$POSTGRES_DB?sslmode=disable" down
 
 ## migrate-force: Force a migration: make migrate-force 1
 migrate-force:
 	@echo "Forcing migration..."
-	@set -a; source $(ENV_FILE); set +a; \
+	@set -a; . $(ENV_FILE); set +a; \
 	migrate -path $(MIGRATIONS_DIR) -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@localhost:5432/$$POSTGRES_DB?sslmode=disable" force $(wordlist 2, $(words $(MAKECMDGOALS)), $(MAKECMDGOALS))
 
 ## migrate-drop: Drops all tables in the database
 migrate-drop: migrate-check db
 	@echo "Dropping all database tables..."
-	@set -a; source $(ENV_FILE); set +a; \
+	@set -a; . $(ENV_FILE); set +a; \
 	migrate -path $(MIGRATIONS_DIR) -database "postgres://$$POSTGRES_USER:$$POSTGRES_PASSWORD@localhost:5432/$$POSTGRES_DB?sslmode=disable" drop
 
 ## gen: Generate source files
