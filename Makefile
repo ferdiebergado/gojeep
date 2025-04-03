@@ -44,8 +44,9 @@ endif
 
 ## default: Show usage information
 default:
-	@echo "Usage:"
-	@sed -n 's/^## //p' Makefile | column -t -s ':' --table-columns TARGET," DESCRIPTION"," EXAMPLE"
+	@echo "TARGET          DESCRIPTION                          		  EXAMPLE"
+	@echo "-----------------------------------------------------------------------------------------------------"
+	@sed -n 's/^## //p' Makefile | column -t -s ':'
 
 ## dev: Run the project in development mode
 dev: migrate-up
