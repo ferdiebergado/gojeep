@@ -65,8 +65,8 @@ func (e *mailer) send(to []string, subject string, body string, contentType stri
 
 	recipients := strings.Join(to, ", ")
 	headers := "To: " + recipients + "\r\n" +
-		"MIME-version: 1.0\r\n" +
 		"Subject: " + subject + "\r\n" +
+		"MIME-version: 1.0\r\n" +
 		"Content-Type: " + contentType + "; charset=\"UTF-8\"\r\n\r\n"
 
 	message := headers + body
