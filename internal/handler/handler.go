@@ -120,6 +120,11 @@ func NewTokenHandler(svc service.TokenService) *TokenHandler {
 func (h *TokenHandler) HandleVerifyToken(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 
+	if token == "" {
+		badRequestResponse(w, r, errors.New("invalid token"))
+		return
+	}
+
 	_, err := h.svc.Verify(token)
 
 	if err != nil {

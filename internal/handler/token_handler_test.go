@@ -17,36 +17,49 @@ import (
 
 func TestHandlerHandleVerifyToken(t *testing.T) {
 	const (
-		path         = "/api/verify"
-		method       = http.MethodGet
-		token        = "testtoken"
-		wantedStatus = http.StatusOK
-		wantedMime   = handler.MimeJSON
-		wantedMsg    = "Verification successful!"
+		path       = "/api/verify"
+		method     = http.MethodGet
+		wantedMime = handler.MimeJSON
 	)
 
 	ctrl := gomock.NewController(t)
 	mockTokenService := mock.NewMockTokenService(ctrl)
-	mockTokenService.EXPECT().Verify(token).Return("", nil)
 	tokenHandler := handler.NewTokenHandler(mockTokenService)
 	r := goexpress.New()
 	r.Get(path, tokenHandler.HandleVerifyToken)
 
-	uri := fmt.Sprintf("%s?token=%s", path, token)
-	req := httptest.NewRequest(method, uri, nil)
-	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
-
-	res := rr.Result()
-	defer res.Body.Close()
-
-	assert.Equal(t, wantedStatus, res.StatusCode)
-	assert.Equal(t, wantedMime, res.Header.Get(handler.HeaderContentType))
-
-	var apiRes handler.Response[any]
-	if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
-		t.Fatal(message.Get("jsonFailed"), err)
+	var tests = []struct {
+		name         string
+		token        string
+		shouldVerify bool
+		wantedStatus int
+		wantedMsg    string
+	}{
+		{"valid token", "testtoken", true, http.StatusOK, "Verification successful!"},
+		{"empty token", "", false, http.StatusBadRequest, "Invalid input."},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldVerify {
+				mockTokenService.EXPECT().Verify(tt.token).Return("", nil)
+			}
+			uri := fmt.Sprintf("%s?token=%s", path, tt.token)
+			req := httptest.NewRequest(method, uri, nil)
+			rr := httptest.NewRecorder()
+			r.ServeHTTP(rr, req)
 
-	assert.Equal(t, wantedMsg, apiRes.Message)
+			res := rr.Result()
+			defer res.Body.Close()
+
+			assert.Equal(t, tt.wantedStatus, res.StatusCode)
+			assert.Equal(t, wantedMime, res.Header.Get(handler.HeaderContentType))
+
+			var apiRes handler.Response[any]
+			if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
+				t.Fatal(message.Get("jsonFailed"), err)
+			}
+
+			assert.Equal(t, tt.wantedMsg, apiRes.Message)
+		})
+	}
 }
