@@ -1,7 +1,4 @@
 version: "2"
-run:
-  concurrency: 2
-  tests: false
 
 linters:
   default: none
