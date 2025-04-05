@@ -33,3 +33,6 @@ build/
 
 # air build dir
 tmp/
+
+# postgrestools config
+postgrestools.jsonc
