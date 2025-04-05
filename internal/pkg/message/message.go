@@ -1,8 +1,9 @@
 package message
 
 var messages = map[string]string{
-	"regSuccess": "Thank you for registering. Please check your email for the verification link.",
-	"jsonfailed": "failed to decode json",
+	"regSuccess":   "Thank you for registering. Please check your email for the verification link.",
+	"jsonfailed":   "failed to decode json",
+	"invalidInput": "Invalid input.",
 }
 
 func Get(key string) string {
