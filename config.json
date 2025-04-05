@@ -1,7 +1,7 @@
 {
   "app": {
     "url": "http://localhost:8888",
-    "key": "SECUREKEYHERE",
+    "key": "YOUR_SECURE_BASE64_ENCODED_KEY",
     "env": "development",
     "is_debug": false
   },
@@ -9,9 +9,9 @@
     "driver": "pgx",
     "host": "localhost",
     "port": 5432,
-    "user": "gopher",
-    "pass": "gopherhole",
-    "db": "gojeep",
+    "user": "YOUR_DB_USER",
+    "pass": "YOUR_DB_PASSWORD",
+    "db": "YOUR_DB_NAME",
     "ssl_mode": "require",
     "ping_timeout": 10,
     "max_open_conns": 20,
@@ -28,7 +28,7 @@
   },
   "email": {
     "from": "gojeep@gmail.com",
-    "password": "GENERATEAPPSPASSWORD",
+    "password": "YOUR_EMAIL_PASSWORD",
     "host": "smtp.gmail.com",
     "port": 587
   },
@@ -37,7 +37,7 @@
     "layout_file": "base.html"
   },
   "jwt": {
-    "signing_key": "GENERATESECUREKEY",
+    "signing_key": "SAME_AS_APP_KEY",
     "key_len": 32,
     "issuer": "https://example.com"
   }
