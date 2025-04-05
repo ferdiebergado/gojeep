@@ -56,3 +56,17 @@ func (mr *MockUserServiceMockRecorder) RegisterUser(ctx, params any) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterUser", reflect.TypeOf((*MockUserService)(nil).RegisterUser), ctx, params)
 }
+
+// VerifyUser mocks base method.
+func (m *MockUserService) VerifyUser(ctx context.Context, token string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyUser", ctx, token)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VerifyUser indicates an expected call of VerifyUser.
+func (mr *MockUserServiceMockRecorder) VerifyUser(ctx, token any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyUser", reflect.TypeOf((*MockUserService)(nil).VerifyUser), ctx, token)
+}

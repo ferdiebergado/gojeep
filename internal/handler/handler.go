@@ -23,16 +23,14 @@ type Response[T any] struct {
 }
 
 type Handler struct {
-	Base  BaseHandler
-	User  UserHandler
-	Token TokenHandler
+	Base BaseHandler
+	User UserHandler
 }
 
 func NewHandler(svc service.Service) *Handler {
 	return &Handler{
-		Base:  *NewBaseHandler(svc.Base),
-		User:  *NewUserHandler(svc.User),
-		Token: *NewTokenHandler(svc.Token),
+		Base: *NewBaseHandler(svc.Base),
+		User: *NewUserHandler(svc.User),
 	}
 }
 
@@ -109,29 +107,22 @@ func (h *UserHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request)
 	response.JSON(w, r, http.StatusCreated, res)
 }
 
-type TokenHandler struct {
-	svc service.TokenService
-}
-
-func NewTokenHandler(svc service.TokenService) *TokenHandler {
-	return &TokenHandler{svc: svc}
-}
-
-func (h *TokenHandler) HandleVerifyToken(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	var errTokenInvalid = errors.New("invalid token")
 	token := r.URL.Query().Get("token")
 
 	if token == "" {
-		badRequestResponse(w, r, errors.New("invalid token"))
+		badRequestResponse(w, r, errTokenInvalid)
 		return
 	}
 
-	_, err := h.svc.Verify(token)
-
-	if err != nil {
-		badRequestResponse(w, r, err)
+	if err := h.service.VerifyUser(r.Context(), token); err != nil {
+		badRequestResponse(w, r, errTokenInvalid)
 		return
 	}
 
-	// TODO: move message to message package
-	response.JSON(w, r, http.StatusOK, &Response[any]{Message: "Verification successful!"})
+	res := Response[any]{
+		Message: "Verification successful!",
+	}
+	response.JSON(w, r, http.StatusOK, res)
 }

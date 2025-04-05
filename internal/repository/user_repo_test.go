@@ -56,7 +56,7 @@ func TestUserRepo_CreateUser(t *testing.T) {
 				PasswordHash: "hashed",
 			},
 			mockSetup: func() {
-				mock.ExpectQuery(repository.CreateUserQuery).
+				mock.ExpectQuery(repository.QueryUserCreate).
 					WithArgs(email1, "hashed").
 					WillReturnRows(sqlmock.NewRows(cols).
 						AddRow("1", email1, now, now))
@@ -71,7 +71,7 @@ func TestUserRepo_CreateUser(t *testing.T) {
 				PasswordHash: "hashed",
 			},
 			mockSetup: func() {
-				mock.ExpectQuery(repository.CreateUserQuery).
+				mock.ExpectQuery(repository.QueryUserCreate).
 					WithArgs(email2, "hashed").
 					WillReturnError(errors.New("insert failed"))
 			},
@@ -84,7 +84,7 @@ func TestUserRepo_CreateUser(t *testing.T) {
 				PasswordHash: "hashed",
 			},
 			mockSetup: func() {
-				mock.ExpectQuery(repository.CreateUserQuery).
+				mock.ExpectQuery(repository.QueryUserCreate).
 					WithArgs(email3, "hashed").
 					WillReturnRows(sqlmock.NewRows(colsNoEmail).
 						AddRow("1", now, now))
@@ -138,7 +138,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 			name:  "User exists",
 			email: "test@abc.com",
 			mockSetup: func() {
-				mock.ExpectQuery(repository.FindUserByEmailQuery).
+				mock.ExpectQuery(repository.QueryUserFindByEmail).
 					WithArgs("test@abc.com").
 					WillReturnRows(sqlmock.NewRows(cols).
 						AddRow("1", "test@abc.com", now, now))
@@ -150,7 +150,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 			name:  "User not found",
 			email: "notfound@abc.com",
 			mockSetup: func() {
-				mock.ExpectQuery(repository.FindUserByEmailQuery).
+				mock.ExpectQuery(repository.QueryUserFindByEmail).
 					WithArgs("notfound@abc.com").
 					WillReturnRows(sqlmock.NewRows(cols))
 			},
@@ -160,7 +160,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 			name:  "Database error",
 			email: "error@abc.com",
 			mockSetup: func() {
-				mock.ExpectQuery(repository.FindUserByEmailQuery).
+				mock.ExpectQuery(repository.QueryUserFindByEmail).
 					WithArgs("error@abc.com").
 					WillReturnError(errors.New("database error"))
 			},
@@ -170,7 +170,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 			name:  "Invalid row scan",
 			email: "scan@abc.com",
 			mockSetup: func() {
-				mock.ExpectQuery(repository.FindUserByEmailQuery).
+				mock.ExpectQuery(repository.QueryUserFindByEmail).
 					WithArgs("scan@abc.com").
 					WillReturnRows(sqlmock.NewRows(colsNoEmail).
 						AddRow("1", now, now))
@@ -195,4 +195,23 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 			assert.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
+}
+
+func TestUserRepo_VerifyUser(t *testing.T) {
+	const email = "scan@abc.com"
+
+	db, mock, err := sqlmock.New(sqlmockOpts)
+	if err != nil {
+		t.Fatalf(stubDbErr, err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+	repo := repository.NewUserRepository(db)
+	mock.ExpectExec(repository.QueryUserVerify).
+		WithArgs(email).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	err = repo.VerifyUser(ctx, email)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
 }

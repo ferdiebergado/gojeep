@@ -71,3 +71,17 @@ func (mr *MockUserRepoMockRecorder) FindUserByEmail(ctx, email any) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserByEmail", reflect.TypeOf((*MockUserRepo)(nil).FindUserByEmail), ctx, email)
 }
+
+// VerifyUser mocks base method.
+func (m *MockUserRepo) VerifyUser(ctx context.Context, email string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyUser", ctx, email)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VerifyUser indicates an expected call of VerifyUser.
+func (mr *MockUserRepoMockRecorder) VerifyUser(ctx, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyUser", reflect.TypeOf((*MockUserRepo)(nil).VerifyUser), ctx, email)
+}

@@ -18,27 +18,35 @@ import (
 
 type UserService interface {
 	RegisterUser(ctx context.Context, params RegisterUserParams) (*model.User, error)
+	VerifyUser(ctx context.Context, token string) error
+}
+
+type UserServiceDeps struct {
+	Repo   repository.UserRepo
+	Hasher security.Hasher
+	Signer security.Signer
+	Mailer email.Mailer
+	Cfg    config.AppConfig
 }
 
 type userService struct {
-	repo     repository.UserRepo
-	tokenSvc TokenService
-	hasher   security.Hasher
-	mailer   email.Mailer
-	cfg      config.AppConfig
+	repo   repository.UserRepo
+	hasher security.Hasher
+	signer security.Signer
+	mailer email.Mailer
+	cfg    config.AppConfig
 }
 
 var _ UserService = (*userService)(nil)
 var ErrDuplicateUser = errors.New("duplicate user")
 
-// TODO: move arguments into a struct
-func NewUserService(repo repository.UserRepo, tokenSvc TokenService, hasher security.Hasher, mailer email.Mailer, cfg config.AppConfig) UserService {
+func NewUserService(deps *UserServiceDeps) UserService {
 	return &userService{
-		repo:     repo,
-		tokenSvc: tokenSvc,
-		hasher:   hasher,
-		mailer:   mailer,
-		cfg:      cfg,
+		repo:   deps.Repo,
+		hasher: deps.Hasher,
+		mailer: deps.Mailer,
+		signer: deps.Signer,
+		cfg:    deps.Cfg,
 	}
 }
 
@@ -82,14 +90,9 @@ func (s *userService) sendVerificationEmail(user *model.User) {
 	)
 
 	audience := s.cfg.URL + "/verify"
-	token, err := s.tokenSvc.Sign(user.Email, []string{audience}, ttl)
+	token, err := s.signer.Sign(user.Email, []string{audience}, ttl)
 	if err != nil {
 		slog.Error("failed to generate token", "reason", err)
-		return
-	}
-
-	if err := s.tokenSvc.SaveToken(context.Background(), token, user.Email, ttl); err != nil {
-		slog.Error("unable to save token", "reason", err)
 		return
 	}
 
@@ -102,4 +105,13 @@ func (s *userService) sendVerificationEmail(user *model.User) {
 		slog.Error("failed to send email", "reason", err)
 		return
 	}
+}
+
+func (s *userService) VerifyUser(ctx context.Context, token string) error {
+	email, err := s.signer.Verify(token)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.VerifyUser(ctx, email)
 }

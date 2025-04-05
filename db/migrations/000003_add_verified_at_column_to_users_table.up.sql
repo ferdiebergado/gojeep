@@ -1,0 +1,4 @@
+-- Active: 1743863131993@@127.0.0.1@5432@postgres
+-- Active: 1727227251476@@127.0.0.1@5432
+ALTER TABLE users
+ADD COLUMN verified_at TIMESTAMPTZ;
