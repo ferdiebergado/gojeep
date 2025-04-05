@@ -103,7 +103,7 @@ func setupEnvironment() (string, error) {
 func loadConfiguration() (*config.Config, error) {
 	cf := flag.String("cfg", cfgFile, "Config file")
 	flag.Parse()
-	cfg, err := config.LoadConfig(*cf)
+	cfg, err := config.New(*cf)
 	if err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
 	}

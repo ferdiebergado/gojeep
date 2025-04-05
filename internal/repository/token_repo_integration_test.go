@@ -36,7 +36,7 @@ func TestTokenRepoIntegrationSaveToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cfg, err := config.LoadConfig(path + configFile)
+	cfg, err := config.New(path + configFile)
 	if err != nil {
 		t.Fatal(err)
 	}

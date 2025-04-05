@@ -52,7 +52,7 @@ func TestUserServiceRegisterUser(t *testing.T) {
 		Email: testEmail,
 	}
 
-	cfg, err := config.LoadConfig("../../config.json")
+	cfg, err := config.New("../../config.json")
 	if err != nil {
 		t.Fatal("failed to load config", err)
 	}

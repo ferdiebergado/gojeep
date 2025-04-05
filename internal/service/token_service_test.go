@@ -46,7 +46,7 @@ func TestTokenServiceSignToken(t *testing.T) {
 	mockRepo := mock.NewMockTokenRepo(ctrl)
 	mockSigner := secMock.NewMockSigner(ctrl)
 
-	cfg, err := config.LoadConfig("../../config.json")
+	cfg, err := config.New("../../config.json")
 	if err != nil {
 		t.Fatal("failed to load config", err)
 	}

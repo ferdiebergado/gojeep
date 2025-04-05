@@ -116,12 +116,12 @@ func (c Config) LogValue() slog.Value {
 	)
 }
 
-func LoadConfig(path string) (*Config, error) {
-	slog.Info("Loading config...", "path", path)
-	path = filepath.Clean(path)
-	configFile, err := os.ReadFile(path)
+func New(cfgFile string) (*Config, error) {
+	slog.Info("Loading config...", "path", cfgFile)
+	cfgFile = filepath.Clean(cfgFile)
+	configFile, err := os.ReadFile(cfgFile)
 	if err != nil {
-		return nil, fmt.Errorf("open config file %s: %w", path, err)
+		return nil, fmt.Errorf("open config file %s: %w", cfgFile, err)
 	}
 
 	var cfg Config
@@ -131,7 +131,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	overrideWithEnv(reflect.ValueOf(&cfg).Elem())
 
-	slog.Debug("loadconfig", slog.Any("config", cfg))
+	slog.Debug("new config", slog.Any("config", cfg))
 
 	return &cfg, nil
 }
