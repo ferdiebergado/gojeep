@@ -2,7 +2,6 @@ package handler_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -17,163 +16,153 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/service/mock"
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
 const (
-	regUrl         = "/api/auth/register"
+	regURL         = "/api/auth/register"
 	testEmail      = "abc@example.com"
 	testPass       = "test"
 	testPassHashed = "hashed"
 )
 
-var validate *validator.Validate
-
-func TestMain(t *testing.M) {
-	validate = validator.New()
-	t.Run()
+type testCase struct {
+	name           string
+	request        handler.RegisterUserRequest
+	setupMocks     func(mockService *mock.MockUserService)
+	expectedStatus int
+	expectedMsg    string
+	verifyResponse func(t *testing.T, res handler.Response[handler.RegisterUserResponse])
 }
 
-func TestUserHandlerHandleUserRegisterSuccess(t *testing.T) {
-	msg := message.Get("regSuccess")
-
-	ctrl := gomock.NewController(t)
-	mockService := mock.NewMockUserService(ctrl)
-	regRequest := handler.RegisterUserRequest{
-		Email:           testEmail,
-		Password:        testPass,
-		PasswordConfirm: testPass,
-	}
-	regParams := service.RegisterUserParams{
-		Email:    testEmail,
-		Password: testPass,
-	}
-
+func TestUserHandler_HandleUserRegister(t *testing.T) {
 	user := &model.User{
 		Model: model.Model{ID: "1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		Email: testEmail,
 	}
 
-	mockService.EXPECT().RegisterUser(handler.NewParamsContext(context.Background(), regRequest), regParams).Return(user, nil)
-	userHandler := handler.NewUserHandler(mockService)
-	r := goexpress.New()
-	r.Post(regUrl, userHandler.HandleUserRegister,
-		handler.DecodeJSON[handler.RegisterUserRequest](), handler.ValidateInput[handler.RegisterUserRequest](validate))
-
-	reqJSON, err := json.Marshal(regRequest)
-
-	if err != nil {
-		t.Fatal(err)
+	tests := []testCase{
+		{
+			name: "Success",
+			request: handler.RegisterUserRequest{
+				Email:           testEmail,
+				Password:        testPass,
+				PasswordConfirm: testPass,
+			},
+			setupMocks: func(mockService *mock.MockUserService) {
+				mockService.EXPECT().
+					RegisterUser(gomock.Any(), service.RegisterUserParams{
+						Email:    testEmail,
+						Password: testPass,
+					}).
+					Return(user, nil)
+			},
+			expectedStatus: http.StatusCreated,
+			expectedMsg:    message.Get("regSuccess"),
+			verifyResponse: func(t *testing.T, res handler.Response[handler.RegisterUserResponse]) {
+				t.Helper()
+				assert.Equal(t, user.ID, res.Data.ID)
+				assert.Equal(t, user.Email, res.Data.Email)
+				assert.NotZero(t, res.Data.CreatedAt)
+				assert.NotZero(t, res.Data.UpdatedAt)
+			},
+		},
+		{
+			name: "Invalid input - empty email",
+			request: handler.RegisterUserRequest{
+				Password:        testPass,
+				PasswordConfirm: testPass,
+			},
+			setupMocks: func(mockService *mock.MockUserService) {
+				mockService.EXPECT().RegisterUser(gomock.Any(), gomock.Any()).Times(0)
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedMsg:    message.Get("invalidInput"),
+		},
+		{
+			name: "Invalid input - invalid email",
+			request: handler.RegisterUserRequest{
+				Email:           "not@nemail",
+				Password:        testPass,
+				PasswordConfirm: testPass,
+			},
+			setupMocks: func(mockService *mock.MockUserService) {
+				mockService.EXPECT().RegisterUser(gomock.Any(), gomock.Any()).Times(0)
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedMsg:    message.Get("invalidInput"),
+		},
+		{
+			name: "Duplicate user",
+			request: handler.RegisterUserRequest{
+				Email:           testEmail,
+				Password:        testPass,
+				PasswordConfirm: testPass,
+			},
+			setupMocks: func(mockService *mock.MockUserService) {
+				mockService.EXPECT().
+					RegisterUser(gomock.Any(), service.RegisterUserParams{
+						Email:    testEmail,
+						Password: testPass,
+					}).
+					Return(nil, service.ErrDuplicateUser)
+			},
+			expectedStatus: http.StatusUnprocessableEntity,
+			expectedMsg:    service.ErrDuplicateUser.Error(),
+		},
 	}
 
-	req := httptest.NewRequest("POST", regUrl, bytes.NewBuffer(reqJSON))
-	req.Header.Set(handler.HeaderContentType, handler.MimeJSON)
-	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
-
-	res := rr.Result()
-	defer res.Body.Close()
-
-	assert.Equal(t, http.StatusCreated, res.StatusCode)
-	assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
-
-	var apiRes handler.Response[handler.RegisterUserResponse]
-	if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
-		t.Fatal(message.Get("jsonFailed"), err)
-	}
-
-	assert.Equal(t, msg, apiRes.Message)
-	assert.Equal(t, user.ID, apiRes.Data.ID)
-	assert.Equal(t, user.Email, apiRes.Data.Email)
-	assert.NotZero(t, apiRes.Data.CreatedAt)
-	assert.NotZero(t, apiRes.Data.UpdatedAt)
-}
-
-func TestUserHandlerHandleUserRegisterInvalidInput(t *testing.T) {
-	const msg = "Invalid input."
-
-	ctrl := gomock.NewController(t)
-	mockService := mock.NewMockUserService(ctrl)
-	userHandler := handler.NewUserHandler(mockService)
-	r := goexpress.New()
-	r.Post(regUrl, userHandler.HandleUserRegister,
-		handler.DecodeJSON[handler.RegisterUserRequest](), handler.ValidateInput[handler.RegisterUserRequest](validate))
-
-	var tests = []struct {
-		name       string
-		regRequest handler.RegisterUserRequest
-	}{
-		{"Empty email", handler.RegisterUserRequest{Password: testPass, PasswordConfirm: testPass}},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService.EXPECT().RegisterUser(gomock.Any(), gomock.Any()).Times(0)
-			reqJSON, err := json.Marshal(tt.regRequest)
-
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			req := httptest.NewRequest("POST", regUrl, bytes.NewBuffer(reqJSON))
-			req.Header.Set(handler.HeaderContentType, handler.MimeJSON)
-			rr := httptest.NewRecorder()
-			r.ServeHTTP(rr, req)
-
-			res := rr.Result()
-			defer res.Body.Close()
-
-			assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
-			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
-
-			var apiRes handler.Response[handler.RegisterUserResponse]
-			if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
-				t.Fatal(message.Get("jsonFailed"), err)
-			}
-
-			assert.Equal(t, msg, apiRes.Message)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			runRegisterUserTest(t, tc)
 		})
 	}
 }
 
-func TestUserHandlerHandleUserRegisterDuplicateUser(t *testing.T) {
+func runRegisterUserTest(t *testing.T, tc testCase) {
+	t.Helper()
+
+	validate := validator.New()
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	mockService := mock.NewMockUserService(ctrl)
-	regRequest := handler.RegisterUserRequest{
-		Email:           testEmail,
-		Password:        testPass,
-		PasswordConfirm: testPass,
-	}
-	regParams := service.RegisterUserParams{
-		Email:    testEmail,
-		Password: testPass,
+
+	if tc.setupMocks != nil {
+		tc.setupMocks(mockService)
 	}
 
-	mockService.EXPECT().RegisterUser(handler.NewParamsContext(context.Background(), regRequest), regParams).Return(nil, service.ErrDuplicateUser)
 	userHandler := handler.NewUserHandler(mockService)
+
 	r := goexpress.New()
-	r.Post(regUrl, userHandler.HandleUserRegister,
-		handler.DecodeJSON[handler.RegisterUserRequest](), handler.ValidateInput[handler.RegisterUserRequest](validate))
+	r.Post(regURL, userHandler.HandleUserRegister,
+		handler.DecodeJSON[handler.RegisterUserRequest](),
+		handler.ValidateInput[handler.RegisterUserRequest](validate),
+	)
 
-	reqJSON, err := json.Marshal(regRequest)
-	if err != nil {
-		t.Fatal(err)
-	}
+	reqBody, err := json.Marshal(tc.request)
+	require.NoError(t, err, "failed to marshal request")
 
-	req := httptest.NewRequest(http.MethodPost, regUrl, bytes.NewBuffer(reqJSON))
+	req := httptest.NewRequest(http.MethodPost, regURL, bytes.NewReader(reqBody))
 	req.Header.Set(handler.HeaderContentType, handler.MimeJSON)
-	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
+	rec := httptest.NewRecorder()
 
-	res := rr.Result()
+	r.ServeHTTP(rec, req)
+
+	res := rec.Result()
 	defer res.Body.Close()
 
-	assert.Equal(t, http.StatusUnprocessableEntity, res.StatusCode)
-	assert.Equal(t, handler.MimeJSON, res.Header[handler.HeaderContentType][0])
+	assert.Equal(t, tc.expectedStatus, res.StatusCode)
+	assert.Equal(t, handler.MimeJSON, res.Header.Get(handler.HeaderContentType))
 
 	var apiRes handler.Response[handler.RegisterUserResponse]
-	if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
-		t.Fatal(message.Get("jsonFailed"), err)
-	}
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&apiRes), "failed to decode response")
 
-	assert.Equal(t, service.ErrDuplicateUser.Error(), apiRes.Message)
+	assert.Equal(t, tc.expectedMsg, apiRes.Message)
+
+	if tc.verifyResponse != nil {
+		tc.verifyResponse(t, apiRes)
+	}
 }
