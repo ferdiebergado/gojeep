@@ -17,6 +17,14 @@ type AppConfig struct {
 	IsDebug bool   `json:"is_debug,omitempty" env:"DEBUG"`
 }
 
+func (c AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("url", c.URL),
+		slog.String("env", c.Env),
+		slog.Bool("debug", c.IsDebug),
+	)
+}
+
 type DBConfig struct {
 	Driver          string `json:"driver,omitempty"`
 	User            string `json:"user" env:"POSTGRES_USER"`
@@ -30,6 +38,21 @@ type DBConfig struct {
 	MaxIdleConns    int    `json:"max_idle_conns,omitempty"`
 	ConnMaxIdle     int    `json:"conn_max_idle,omitempty"`
 	ConnMaxLifetime int    `json:"conn_max_lifetime,omitempty"`
+}
+
+func (c DBConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("driver", c.Driver),
+		slog.String("host", c.Host),
+		slog.Int("port", c.Port),
+		slog.String("sslmode", c.SSLMode),
+		slog.Int("ping_timeout", c.PingTimeout),
+		slog.String("db", c.DB),
+		slog.Int("max_open_conns", c.MaxOpenConns),
+		slog.Int("max_idle_conns", c.MaxIdleConns),
+		slog.Int("conn_max_idle", c.ConnMaxIdle),
+		slog.Int("conn_max_lifetime", c.ConnMaxLifetime),
+	)
 }
 
 type ServerConfig struct {
@@ -52,12 +75,27 @@ type EmailConfig struct {
 	Port     int    `json:"port,omitempty" env:"EMAIL_PORT"`
 }
 
+func (c EmailConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("host", c.Host),
+		slog.Int("port", c.Port),
+	)
+}
+
 type JWTConfig struct {
 	SigningKey string `json:"signing_key,omitempty" env:"APP_KEY"`
 	KeyLen     uint32 `json:"key_len,omitempty"`
 	Issuer     string `json:"issuer,omitempty" env:"APP_URL"`
 }
 
+func (c JWTConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Uint64("keylen", uint64(c.KeyLen)),
+		slog.String("issuer", c.Issuer),
+	)
+}
+
+// TODO: reduce mem usage
 type Config struct {
 	App      AppConfig      `json:"app,omitempty"`
 	Db       DBConfig       `json:"db,omitempty"`
@@ -65,6 +103,17 @@ type Config struct {
 	Email    EmailConfig    `json:"email,omitempty"`
 	Template TemplateConfig `json:"template,omitempty"`
 	JWT      JWTConfig      `json:"jwt,omitempty"`
+}
+
+func (c Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app", c.App),
+		slog.Any("db", c.Db),
+		slog.Any("jwt", c.JWT),
+		slog.Any("email", c.Email),
+		slog.Any("template", c.Template),
+		slog.Any("server", c.Server),
+	)
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -75,23 +124,16 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, fmt.Errorf("open config file %s: %w", path, err)
 	}
 
-	var config Config
-	if err := json.Unmarshal(configFile, &config); err != nil {
+	var cfg Config
+	if err := json.Unmarshal(configFile, &cfg); err != nil {
 		return nil, fmt.Errorf("decode config %s %w", configFile, err)
 	}
 
-	overrideWithEnv(reflect.ValueOf(&config).Elem())
+	overrideWithEnv(reflect.ValueOf(&cfg).Elem())
 
-	const mask = "*"
-	cfgCopy := config
-	cfgCopy.Db.Pass = mask
-	cfgCopy.Email.From = mask
-	cfgCopy.Email.Password = mask
-	cfgCopy.JWT.SigningKey = mask
+	slog.Debug("loadconfig", slog.Any("config", cfg))
 
-	slog.Debug("loadconfig", slog.Any("config", cfgCopy))
-
-	return &config, nil
+	return &cfg, nil
 }
 
 func overrideWithEnv(v reflect.Value) {
