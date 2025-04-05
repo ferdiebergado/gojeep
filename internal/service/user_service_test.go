@@ -17,10 +17,9 @@ import (
 
 	mailMock "github.com/ferdiebergado/gojeep/internal/pkg/email/mock"
 	secMock "github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
-	srvMock "github.com/ferdiebergado/gojeep/internal/service/mock"
 )
 
-func TestUserServiceRegisterUser(t *testing.T) {
+func TestUserService_RegisterUser(t *testing.T) {
 	const (
 		testEmail      = "abc@example.com"
 		testPass       = "test"
@@ -33,8 +32,8 @@ func TestUserServiceRegisterUser(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	mockRepo := mock.NewMockUserRepo(ctrl)
-	mockTokenSvc := srvMock.NewMockTokenService(ctrl)
 	mockHasher := secMock.NewMockHasher(ctrl)
+	mockSigner := secMock.NewMockSigner(ctrl)
 	mockMailer := mailMock.NewMockMailer(ctrl)
 
 	regParams := service.RegisterUserParams{
@@ -62,7 +61,6 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	ctx := context.Background()
 	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(nil, sql.ErrNoRows)
 	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
-
 	data := map[string]string{
 		"Title":  title,
 		"Header": subject,
@@ -70,23 +68,25 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(3)
-
+	wg.Add(2)
+	mockSigner.EXPECT().Sign(testEmail, []string{audience}, ttl).Do(func(_ string, _ []string, _ time.Duration) {
+		defer wg.Done()
+	}).Return(token, nil)
 	mockMailer.EXPECT().SendHTML([]string{testEmail}, subject, tmpl, data).Do(func(to []string, subj, tmplName string, data map[string]string) {
 		defer wg.Done()
 	})
 
-	mockTokenSvc.EXPECT().Sign(testEmail, []string{audience}, ttl).Do(func(string, []string, time.Duration) {
-		defer wg.Done()
-	}).Return(token, nil)
-
-	mockTokenSvc.EXPECT().SaveToken(ctx, token, testEmail, ttl).Do(func(context.Context, string, string, time.Duration) {
-		defer wg.Done()
-	}).Return(nil)
-
 	mockRepo.EXPECT().CreateUser(ctx, createParams).Return(user, nil)
 
-	userService := service.NewUserService(mockRepo, mockTokenSvc, mockHasher, mockMailer, cfg.App)
+	deps := &service.UserServiceDeps{
+		Repo:   mockRepo,
+		Hasher: mockHasher,
+		Signer: mockSigner,
+		Mailer: mockMailer,
+		Cfg:    cfg.App,
+	}
+
+	userService := service.NewUserService(deps)
 	newUser, err := userService.RegisterUser(ctx, regParams)
 	assert.NoError(t, err)
 	assert.NotNil(t, newUser)
@@ -96,4 +96,38 @@ func TestUserServiceRegisterUser(t *testing.T) {
 	assert.NotZero(t, newUser.UpdatedAt)
 
 	wg.Wait()
+}
+
+func TestUserService_VerifyUser(t *testing.T) {
+	const (
+		email = "test@example.com"
+		token = "token"
+	)
+
+	ctrl := gomock.NewController(t)
+	mockRepo := mock.NewMockUserRepo(ctrl)
+	mockHasher := secMock.NewMockHasher(ctrl)
+	mockMailer := mailMock.NewMockMailer(ctrl)
+	mockSigner := secMock.NewMockSigner(ctrl)
+
+	cfg, err := config.New("../../config.json")
+	if err != nil {
+		t.Fatal("failed to load config", err)
+	}
+
+	ctx := context.Background()
+	mockRepo.EXPECT().VerifyUser(ctx, email).Return(nil)
+	mockSigner.EXPECT().Verify(token).Return(email, nil)
+
+	deps := &service.UserServiceDeps{
+		Repo:   mockRepo,
+		Hasher: mockHasher,
+		Signer: mockSigner,
+		Mailer: mockMailer,
+		Cfg:    cfg.App,
+	}
+	svc := service.NewUserService(deps)
+	err = svc.VerifyUser(ctx, token)
+
+	assert.NoError(t, err)
 }
