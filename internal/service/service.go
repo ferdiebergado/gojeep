@@ -7,18 +7,29 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/repository"
 )
 
-type Service struct {
-	Base  BaseService
-	User  UserService
-	Token TokenService
+type Dependencies struct {
+	Repo   repository.Repository
+	Hasher security.Hasher
+	Signer security.Signer
+	Mailer email.Mailer
+	Cfg    config.AppConfig
 }
 
-// TODO: refactor arguments into a struct
-func NewService(repo *repository.Repository, hasher security.Hasher, mailer email.Mailer, signer security.Signer, cfg config.AppConfig) *Service {
-	tokenService := NewTokenService(repo.Token, signer)
+type Service struct {
+	Base BaseService
+	User UserService
+}
+
+func NewService(deps *Dependencies) *Service {
+	userSvcDeps := &UserServiceDeps{
+		Repo:   deps.Repo.User,
+		Hasher: deps.Hasher,
+		Signer: deps.Signer,
+		Mailer: deps.Mailer,
+		Cfg:    deps.Cfg,
+	}
 	return &Service{
-		Base:  NewBaseService(repo.Base),
-		User:  NewUserService(repo.User, tokenService, hasher, mailer, cfg),
-		Token: tokenService,
+		Base: NewBaseService(deps.Repo.Base),
+		User: NewUserService(userSvcDeps),
 	}
 }
