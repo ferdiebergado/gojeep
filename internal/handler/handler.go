@@ -13,7 +13,7 @@ import (
 
 const (
 	HeaderContentType = "Content-Type"
-	MimeJSON          = "application/json; charset=utf-8" //TODO: remove charset when goexpress has been updated
+	MimeJSON          = "application/json"
 )
 
 type Response[T any] struct {
