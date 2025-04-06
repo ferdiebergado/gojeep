@@ -14,6 +14,7 @@ const aud = "localhost/verify"
 var audience = []string{aud}
 
 func TestJWTSignAndVerify(t *testing.T) {
+	t.Parallel()
 	cfg := config.JWTConfig{
 		SigningKey: "CHANGEME",
 		KeyLen:     32,
@@ -32,6 +33,7 @@ func TestJWTSignAndVerify(t *testing.T) {
 }
 
 func TestJWTVerifyInvalidToken(t *testing.T) {
+	t.Parallel()
 	cfg := config.JWTConfig{
 		SigningKey: "CHANGEME",
 		KeyLen:     32,
@@ -45,6 +47,7 @@ func TestJWTVerifyInvalidToken(t *testing.T) {
 }
 
 func TestJWTVerifyModifiedToken(t *testing.T) {
+	t.Parallel()
 	cfg := config.JWTConfig{
 		SigningKey: "CHANGEME",
 		KeyLen:     32,
@@ -64,6 +67,7 @@ func TestJWTVerifyModifiedToken(t *testing.T) {
 }
 
 func TestJWTVerifyExpiredToken(t *testing.T) {
+	t.Parallel()
 	cfg := config.JWTConfig{
 		SigningKey: "CHANGEME",
 		KeyLen:     32,
@@ -82,6 +86,7 @@ func TestJWTVerifyExpiredToken(t *testing.T) {
 }
 
 func TestJWTVerifyWrongSigningKey(t *testing.T) {
+	t.Parallel()
 	cfg := config.JWTConfig{
 		SigningKey: "CHANGEME",
 		KeyLen:     32,

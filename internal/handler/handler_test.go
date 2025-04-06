@@ -16,6 +16,7 @@ import (
 )
 
 func TestHandlerHandleHealth(t *testing.T) {
+	t.Parallel()
 	const (
 		url = "/health"
 		msg = "healthy"

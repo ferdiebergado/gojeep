@@ -20,6 +20,7 @@ import (
 )
 
 func TestUserService_RegisterUser(t *testing.T) {
+	t.Parallel()
 	const (
 		testEmail      = "abc@example.com"
 		testPass       = "test"
@@ -99,6 +100,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 }
 
 func TestUserService_VerifyUser(t *testing.T) {
+	t.Parallel()
 	const (
 		email = "test@example.com"
 		token = "token"

@@ -9,6 +9,7 @@ import (
 )
 
 func TestArgon2HasherHash(t *testing.T) {
+	t.Parallel()
 	hasher := &security.Argon2Hasher{}
 	password := "securepassword"
 

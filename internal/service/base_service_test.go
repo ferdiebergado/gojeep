@@ -12,6 +12,7 @@ import (
 )
 
 func TestServicePingDB(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	mockRepo := mock.NewMockRepository(ctrl)
 	ctx := context.Background()

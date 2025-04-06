@@ -10,6 +10,7 @@ import (
 )
 
 func TestRepositoryPing(t *testing.T) {
+	t.Parallel()
 	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
