@@ -12,6 +12,7 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/repository"
 	"github.com/ferdiebergado/gojeep/internal/repository/mock"
 	"github.com/ferdiebergado/gojeep/internal/service"
+	"github.com/ferdiebergado/gopherkit/env"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
@@ -50,6 +51,10 @@ func TestUserService_RegisterUser(t *testing.T) {
 	user := &model.User{
 		Model: model.Model{ID: "1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		Email: testEmail,
+	}
+
+	if err := env.Load("../../.env.testing"); err != nil {
+		t.Fatal(err)
 	}
 
 	cfg, err := config.New("../../config.json")

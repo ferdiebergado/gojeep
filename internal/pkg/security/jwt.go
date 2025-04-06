@@ -16,20 +16,24 @@ type Signer interface {
 
 type signer struct {
 	method jwt.SigningMethod
-	cfg    config.JWTConfig
+	key    string
+	jtiLen uint32
+	issuer string
 }
 
 var _ Signer = (*signer)(nil)
 
-func NewSigner(cfg config.JWTConfig) Signer {
+func NewSigner(cfg *config.Config) Signer {
 	return &signer{
 		method: jwt.SigningMethodHS256,
-		cfg:    cfg,
+		key:    cfg.App.Key,
+		jtiLen: cfg.Options.JWT.JTILen,
+		issuer: cfg.JWT.Issuer,
 	}
 }
 
 func (j *signer) Sign(subject string, audience []string, duration time.Duration) (string, error) {
-	id, err := GenerateRandomBytesEncoded(j.cfg.KeyLen)
+	id, err := GenerateRandomBytesEncoded(j.jtiLen)
 	if err != nil {
 		return "", err
 	}
@@ -40,19 +44,19 @@ func (j *signer) Sign(subject string, audience []string, duration time.Duration)
 		ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
 		IssuedAt:  jwt.NewNumericDate(now),
 		NotBefore: jwt.NewNumericDate(now),
-		Issuer:    j.cfg.Issuer,
+		Issuer:    j.issuer,
 		Subject:   subject,
 		ID:        id,
 		Audience:  audience,
 	}
 
 	token := jwt.NewWithClaims(j.method, claims)
-	return token.SignedString([]byte(j.cfg.SigningKey))
+	return token.SignedString([]byte(j.key))
 }
 
 func (j *signer) Verify(tokenString string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(_ *jwt.Token) (any, error) {
-		return []byte(j.cfg.SigningKey), nil
+		return []byte(j.key), nil
 	}, jwt.WithValidMethods([]string{j.method.Alg()}))
 	if err != nil {
 		return "", err

@@ -33,7 +33,7 @@ type mailer struct {
 var _ Mailer = (*mailer)(nil)
 
 func New(cfg *config.Config) (Mailer, error) {
-	tmplCfg := cfg.Template
+	tmplCfg := cfg.Options.Template
 	path := tmplCfg.Path
 	layoutFile := filepath.Join(path, tmplCfg.LayoutFile)
 	layoutTmpl := template.Must(template.New("layout").ParseFiles(layoutFile))

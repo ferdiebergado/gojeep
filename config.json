@@ -1,18 +1,6 @@
 {
-  "app": {
-    "url": "http://localhost:8888",
-    "key": "YOUR_SECURE_BASE64_ENCODED_KEY",
-    "env": "development",
-    "is_debug": false
-  },
   "db": {
     "driver": "pgx",
-    "host": "localhost",
-    "port": 5432,
-    "user": "YOUR_DB_USER",
-    "pass": "YOUR_DB_PASSWORD",
-    "db": "YOUR_DB_NAME",
-    "ssl_mode": "require",
     "ping_timeout": 10,
     "max_open_conns": 20,
     "max_idle_conns": 10,
@@ -20,25 +8,16 @@
     "conn_max_idle_time": 60
   },
   "server": {
-    "port": 8888,
     "read_timeout": 5,
     "write_timeout": 10,
     "idle_timeout": 60,
     "shutdown_timeout": 5
-  },
-  "email": {
-    "from": "gojeep@gmail.com",
-    "password": "YOUR_EMAIL_PASSWORD",
-    "host": "smtp.gmail.com",
-    "port": 587
   },
   "template": {
     "path": "web/templates",
     "layout_file": "base.html"
   },
   "jwt": {
-    "signing_key": "SAME_AS_APP_KEY",
-    "key_len": 32,
-    "issuer": "https://example.com"
+    "jti_len": 32
   }
 }

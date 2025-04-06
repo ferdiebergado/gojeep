@@ -10,27 +10,30 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/config"
 )
 
-func Connect(ctx context.Context, cfg *config.DBConfig) (*sql.DB, error) {
-	const dbStr = "postgres://%s:%s@%s:%d/%s?sslmode=%s"
+func Connect(ctx context.Context, cfg *config.Config) (*sql.DB, error) {
 	slog.Info("Connecting to the database")
-	dsn := fmt.Sprintf(dbStr, cfg.User, cfg.Pass, cfg.Host, cfg.Port, cfg.DB, cfg.SSLMode)
-	db, err := sql.Open(cfg.Driver, dsn)
+
+	const dbStr = "postgres://%s:%s@%s:%d/%s?sslmode=%s"
+	dbCfg := cfg.DB
+	dbOpts := cfg.Options.DB
+	dsn := fmt.Sprintf(dbStr, dbCfg.User, dbCfg.Pass, dbCfg.Host, dbCfg.Port, dbCfg.DB, dbCfg.SSLMode)
+	db, err := sql.Open(cfg.Options.DB.Driver, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("initialize database: %w", err)
 	}
 
-	pingCtx, cancel := context.WithTimeout(ctx, time.Duration(cfg.PingTimeout)*time.Second)
+	pingCtx, cancel := context.WithTimeout(ctx, time.Duration(dbOpts.PingTimeout)*time.Second)
 	defer cancel()
 
 	if err := db.PingContext(pingCtx); err != nil {
 		return nil, fmt.Errorf("connect database: %w", err)
 	}
 
-	db.SetMaxOpenConns(cfg.MaxOpenConns)
-	db.SetMaxIdleConns(cfg.MaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(cfg.ConnMaxLifetime) * time.Second)
-	db.SetConnMaxIdleTime(time.Duration(cfg.ConnMaxIdle) * time.Second)
+	db.SetMaxOpenConns(dbOpts.MaxOpenConns)
+	db.SetMaxIdleConns(dbOpts.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(dbOpts.ConnMaxLifetime) * time.Second)
+	db.SetConnMaxIdleTime(time.Duration(dbOpts.ConnMaxIdle) * time.Second)
 
-	slog.Info("Connected to the database", "db", cfg.DB)
+	slog.Info("Connected to the database", "db", dbCfg.DB)
 	return db, nil
 }

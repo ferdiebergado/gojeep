@@ -63,7 +63,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	dbConn, err := db.Connect(ctx, &cfg.Db)
+	dbConn, err := db.Connect(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 	if err != nil {
 		return nil, err
 	}
-	signer := security.NewSigner(cfg.JWT)
+	signer := security.NewSigner(cfg)
 
 	deps := &handler.AppDependencies{
 		Config:    cfg,
@@ -134,11 +134,11 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 
 func createServer(cfg *config.Config, router *goexpress.Router) *http.Server {
 	return &http.Server{
-		Addr:         fmt.Sprintf(fmtAddr, cfg.Server.Port),
+		Addr:         fmt.Sprintf(fmtAddr, cfg.App.Port),
 		Handler:      router,
-		ReadTimeout:  time.Duration(cfg.Server.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(cfg.Server.WriteTimeout) * time.Second,
-		IdleTimeout:  time.Duration(cfg.Server.IdleTimeout) * time.Second,
+		ReadTimeout:  time.Duration(cfg.Options.Server.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(cfg.Options.Server.WriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(cfg.Options.Server.IdleTimeout) * time.Second,
 	}
 }
 
@@ -156,7 +156,7 @@ func startServer(server *http.Server, cfg *config.Config) chan error {
 
 func shutdownServer(server *http.Server, cfg *config.Config) error {
 	slog.Info("Shutting down server...")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Server.ShutdownTimeout)*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Options.Server.ShutdownTimeout)*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
