@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	regURL         = "/api/auth/register"
+	regURL         = "/auth/register"
 	testEmail      = "abc@example.com"
 	testPass       = "test"
 	testPassHashed = "hashed"

@@ -17,7 +17,7 @@ import (
 
 func TestHandlerHandleHealth(t *testing.T) {
 	const (
-		url = "/api/health"
+		url = "/health"
 		msg = "healthy"
 	)
 
