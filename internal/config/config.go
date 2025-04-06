@@ -11,8 +11,8 @@ import (
 )
 
 type Options struct {
-	DB       DBOptions       `json:"db,omitempty"`
 	Server   ServerOptions   `json:"server,omitempty"`
+	DB       DBOptions       `json:"db,omitempty"`
 	Template TemplateOptions `json:"template,omitempty"`
 	JWT      JWTOptions      `json:"jwt,omitempty"`
 }
@@ -43,18 +43,18 @@ type JWTOptions struct {
 }
 
 type AppConfig struct {
-	URL     string
-	Port    int
-	Key     string
-	Env     string
-	IsDebug bool
+	URL      string
+	Port     int
+	Key      string
+	Env      string
+	LogLevel string
 }
 
 func (c AppConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("url", c.URL),
 		slog.String("env", c.Env),
-		slog.Bool("debug", c.IsDebug),
+		slog.String("log_level", c.LogLevel),
 	)
 }
 
@@ -134,11 +134,11 @@ func New(cfgFile string) (*Config, error) {
 
 	cfg := &Config{
 		App: AppConfig{
-			URL:     env.MustGet("APP_URL"),
-			Port:    env.GetInt("PORT", 8888),
-			Key:     env.MustGet("APP_KEY"),
-			Env:     env.Get("APP_ENV", "development"),
-			IsDebug: env.GetBool("DEBUG", true),
+			URL:      env.MustGet("APP_URL"),
+			Port:     env.GetInt("PORT", 8888),
+			Key:      env.MustGet("APP_KEY"),
+			Env:      env.Get("ENV", "development"),
+			LogLevel: env.Get("LOG_LEVEL", "INFO"),
 		},
 		DB: DBConfig{
 			User:    env.MustGet("POSTGRES_USER"),

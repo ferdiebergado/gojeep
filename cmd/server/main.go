@@ -27,14 +27,6 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-const (
-	envVar  = "ENV"
-	envDev  = "development"
-	envProd = "production"
-	cfgFile = "config.json"
-	fmtAddr = ":%d"
-)
-
 var validate *validator.Validate
 
 func main() {
@@ -44,21 +36,25 @@ func main() {
 		slog.Info("Signal context cleanup complete.")
 	}()
 
-	if err := run(signalCtx); err != nil {
+	cfgFile := flag.String("cfg", "config.json", "Config file")
+	logLevel := flag.String("loglevel", "", "Log level (info/warn/error/debug)")
+	flag.Parse()
+
+	if err := run(signalCtx, cfgFile, logLevel); err != nil {
 		slog.Error("fatal error", "reason", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context) error {
+func run(ctx context.Context, cfgFile, logLevel *string) error {
 	appEnv, err := setupEnvironment()
 	if err != nil {
 		return err
 	}
 
-	logging.SetLogger(os.Stdout, appEnv)
+	logging.SetLogger(os.Stdout, appEnv, *logLevel)
 
-	cfg, err := loadConfiguration()
+	cfg, err := loadConfiguration(cfgFile)
 	if err != nil {
 		return err
 	}
@@ -78,7 +74,6 @@ func run(ctx context.Context) error {
 	app.SetupRoutes()
 
 	server := createServer(cfg, app.Router())
-
 	serverErr := startServer(server, cfg)
 	select {
 	case <-ctx.Done():
@@ -91,8 +86,8 @@ func run(ctx context.Context) error {
 }
 
 func setupEnvironment() (string, error) {
-	appEnv := env.Get(envVar, envDev)
-	if appEnv != envProd {
+	appEnv := env.Get("ENV", "development")
+	if appEnv != "production" {
 		if err := environment.LoadEnv(appEnv); err != nil {
 			return "", fmt.Errorf("load env: %w", err)
 		}
@@ -100,10 +95,8 @@ func setupEnvironment() (string, error) {
 	return appEnv, nil
 }
 
-func loadConfiguration() (*config.Config, error) {
-	cf := flag.String("cfg", cfgFile, "Config file")
-	flag.Parse()
-	cfg, err := config.New(*cf)
+func loadConfiguration(cfgFile *string) (*config.Config, error) {
+	cfg, err := config.New(*cfgFile)
 	if err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
@@ -134,7 +127,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 
 func createServer(cfg *config.Config, router *goexpress.Router) *http.Server {
 	return &http.Server{
-		Addr:         fmt.Sprintf(fmtAddr, cfg.App.Port),
+		Addr:         fmt.Sprintf(":%d", cfg.App.Port),
 		Handler:      router,
 		ReadTimeout:  time.Duration(cfg.Options.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(cfg.Options.Server.WriteTimeout) * time.Second,
@@ -145,7 +138,7 @@ func createServer(cfg *config.Config, router *goexpress.Router) *http.Server {
 func startServer(server *http.Server, cfg *config.Config) chan error {
 	serverErr := make(chan error, 1)
 	go func() {
-		slog.Info("Server started", "address", server.Addr, "env", cfg.App.Env, slog.Bool("debug", cfg.App.IsDebug))
+		slog.Info("Server started", "address", server.Addr, "env", cfg.App.Env, "log_level", cfg.App.LogLevel)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 		}
