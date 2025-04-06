@@ -68,4 +68,7 @@ func (a *App) SetupRoutes() {
 
 	apiHandler := NewHandler(*svc)
 	mountAPIRoutes(a.router, apiHandler, a.validater)
+	if a.cfg.App.Env == "development" {
+		MountPProfRoutes(a.router)
+	}
 }
