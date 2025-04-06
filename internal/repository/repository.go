@@ -4,7 +4,7 @@ import "database/sql"
 
 type Repository struct {
 	Base BaseRepository
-	User UserRepo
+	User UserRepository
 }
 
 func NewRepository(db *sql.DB) *Repository {

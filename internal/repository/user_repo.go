@@ -8,7 +8,7 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/model"
 )
 
-type UserRepo interface {
+type UserRepository interface {
 	CreateUser(ctx context.Context, params CreateUserParams) (*model.User, error)
 	FindUserByEmail(ctx context.Context, email string) (*model.User, error)
 	VerifyUser(ctx context.Context, email string) error
@@ -18,9 +18,9 @@ type userRepo struct {
 	db *sql.DB
 }
 
-var _ UserRepo = (*userRepo)(nil)
+var _ UserRepository = (*userRepo)(nil)
 
-func NewUserRepository(db *sql.DB) UserRepo {
+func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepo{db: db}
 }
 

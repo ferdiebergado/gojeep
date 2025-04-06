@@ -22,7 +22,7 @@ type UserService interface {
 }
 
 type UserServiceDeps struct {
-	Repo   repository.UserRepo
+	Repo   repository.UserRepository
 	Hasher security.Hasher
 	Signer security.Signer
 	Mailer email.Mailer
@@ -30,7 +30,7 @@ type UserServiceDeps struct {
 }
 
 type userService struct {
-	repo   repository.UserRepo
+	repo   repository.UserRepository
 	hasher security.Hasher
 	signer security.Signer
 	mailer email.Mailer
