@@ -52,6 +52,7 @@ func run(ctx context.Context, cfgFile, logLevel *string) error {
 		return err
 	}
 
+	handler.StartPProf()
 	logging.SetLogger(os.Stdout, appEnv, *logLevel)
 
 	cfg, err := loadConfiguration(cfgFile)
