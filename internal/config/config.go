@@ -59,12 +59,12 @@ func (c AppConfig) LogValue() slog.Value {
 }
 
 type DBConfig struct {
-	User    string `json:"user" env:"POSTGRES_USER"`
-	Pass    string `json:"pass" env:"POSTGRES_PASSWORD"`
-	Host    string `json:"host" env:"POSTGRES_HOST"`
-	Port    int    `json:"port" env:"POSTGRES_PORT"`
-	SSLMode string `json:"ssl_mode" env:"POSTGRES_SSLMODE"`
-	DB      string `json:"db" env:"POSTGRES_DB"`
+	User    string
+	Pass    string
+	Host    string
+	Port    int
+	SSLMode string
+	DB      string
 }
 
 func (c DBConfig) LogValue() slog.Value {
