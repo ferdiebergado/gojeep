@@ -106,10 +106,10 @@ func TestUserHandler_HandleUserRegister(t *testing.T) {
 						Email:    testEmail,
 						Password: testPass,
 					}).
-					Return(nil, service.ErrDuplicateUser)
+					Return(nil, &service.DuplicateUserError{Email: testEmail})
 			},
 			expectedStatus: http.StatusUnprocessableEntity,
-			expectedMsg:    service.ErrDuplicateUser.Error(),
+			expectedMsg:    (&service.DuplicateUserError{Email: testEmail}).Error(),
 		},
 	}
 
