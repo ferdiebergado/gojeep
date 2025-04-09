@@ -18,6 +18,7 @@
     "layout_file": "base.html"
   },
   "jwt": {
-    "jti_len": 32
+    "jti_len": 32,
+    "issuer": "http://localhost:8888"
   }
 }

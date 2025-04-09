@@ -40,6 +40,7 @@ type TemplateOptions struct {
 
 type JWTOptions struct {
 	JTILen uint32 `json:"jti_len,omitempty"`
+	Issuer string `json:"issuer,omitempty"`
 }
 
 type AppConfig struct {
@@ -90,22 +91,11 @@ func (c EmailConfig) LogValue() slog.Value {
 	)
 }
 
-type JWTConfig struct {
-	Issuer string
-}
-
-func (c JWTConfig) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.String("issuer", c.Issuer),
-	)
-}
-
 // TODO: reduce mem usage
 type Config struct {
 	App     AppConfig
 	DB      DBConfig
 	Email   EmailConfig
-	JWT     JWTConfig
 	Options Options
 }
 
@@ -113,7 +103,6 @@ func (c Config) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Any("app", c.App),
 		slog.Any("db", c.DB),
-		slog.Any("jwt", c.JWT),
 		slog.Any("email", c.Email),
 		slog.Any("options", c.Options),
 	)
@@ -153,9 +142,6 @@ func New(cfgFile string) (*Config, error) {
 			Password: env.MustGet("EMAIL_PASSWORD"),
 			Host:     env.MustGet("EMAIL_HOST"),
 			Port:     env.GetInt("EMAIL_PORT", 587),
-		},
-		JWT: JWTConfig{
-			Issuer: env.MustGet("JWT_ISSUER"),
 		},
 		Options: opts,
 	}

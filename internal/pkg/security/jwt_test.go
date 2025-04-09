@@ -16,12 +16,10 @@ var audience = []string{aud}
 func TestJWTSignAndVerify(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
-		JWT: config.JWTConfig{
-			Issuer: "test",
-		},
 		Options: config.Options{
 			JWT: config.JWTOptions{
 				JTILen: 32,
+				Issuer: "test",
 			},
 		},
 	}
@@ -40,12 +38,10 @@ func TestJWTSignAndVerify(t *testing.T) {
 func TestJWTVerifyInvalidToken(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
-		JWT: config.JWTConfig{
-			Issuer: "test",
-		},
 		Options: config.Options{
 			JWT: config.JWTOptions{
 				JTILen: 32,
+				Issuer: "test",
 			},
 		},
 	}
@@ -59,12 +55,10 @@ func TestJWTVerifyInvalidToken(t *testing.T) {
 func TestJWTVerifyModifiedToken(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
-		JWT: config.JWTConfig{
-			Issuer: "test",
-		},
 		Options: config.Options{
 			JWT: config.JWTOptions{
 				JTILen: 32,
+				Issuer: "test",
 			},
 		},
 	}
@@ -84,12 +78,10 @@ func TestJWTVerifyModifiedToken(t *testing.T) {
 func TestJWTVerifyExpiredToken(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
-		JWT: config.JWTConfig{
-			Issuer: "test",
-		},
 		Options: config.Options{
 			JWT: config.JWTOptions{
 				JTILen: 32,
+				Issuer: "test",
 			},
 		},
 	}
@@ -111,12 +103,10 @@ func TestJWTVerifyWrongSigningKey(t *testing.T) {
 		App: config.AppConfig{
 			Key: "hello",
 		},
-		JWT: config.JWTConfig{
-			Issuer: "test",
-		},
 		Options: config.Options{
 			JWT: config.JWTOptions{
 				JTILen: 32,
+				Issuer: "test",
 			},
 		},
 	}
@@ -132,12 +122,10 @@ func TestJWTVerifyWrongSigningKey(t *testing.T) {
 		App: config.AppConfig{
 			Key: "world",
 		},
-		JWT: config.JWTConfig{
-			Issuer: "test",
-		},
 		Options: config.Options{
 			JWT: config.JWTOptions{
 				JTILen: 32,
+				Issuer: "test",
 			},
 		},
 	}
