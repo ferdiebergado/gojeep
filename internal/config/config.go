@@ -77,14 +77,14 @@ func (c DBConfig) LogValue() slog.Value {
 	)
 }
 
-type EmailConfig struct {
+type SMTPConfig struct {
 	From     string
 	Password string
 	Host     string
 	Port     int
 }
 
-func (c EmailConfig) LogValue() slog.Value {
+func (c SMTPConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("host", c.Host),
 		slog.Int("port", c.Port),
@@ -95,7 +95,7 @@ func (c EmailConfig) LogValue() slog.Value {
 type Config struct {
 	App     AppConfig
 	DB      DBConfig
-	Email   EmailConfig
+	Email   SMTPConfig
 	Options Options
 }
 
@@ -137,11 +137,11 @@ func New(cfgFile string) (*Config, error) {
 			SSLMode: env.MustGet("POSTGRES_SSLMODE"),
 			DB:      env.MustGet("POSTGRES_DB"),
 		},
-		Email: EmailConfig{
-			From:     env.MustGet("EMAIL_FROM"),
-			Password: env.MustGet("EMAIL_PASSWORD"),
-			Host:     env.MustGet("EMAIL_HOST"),
-			Port:     env.GetInt("EMAIL_PORT", 587),
+		Email: SMTPConfig{
+			From:     env.MustGet("SMTP_USER"),
+			Password: env.MustGet("SMTP_PASS"),
+			Host:     env.MustGet("SMTP_HOST"),
+			Port:     env.GetInt("SMTP_PORT", 587),
 		},
 		Options: opts,
 	}
