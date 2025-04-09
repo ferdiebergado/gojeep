@@ -27,6 +27,7 @@ type mailer struct {
 	pass      string
 	host      string
 	port      int
+	sender    string
 	templates templateMap
 }
 
@@ -45,10 +46,11 @@ func New(cfg *config.Config) (Mailer, error) {
 	emailCfg := cfg.Email
 
 	return &mailer{
-		from:      emailCfg.From,
+		from:      emailCfg.User,
 		pass:      emailCfg.Password,
 		host:      emailCfg.Host,
 		port:      emailCfg.Port,
+		sender:    cfg.Options.Email.Sender,
 		templates: tmplMap,
 	}, nil
 }
@@ -64,7 +66,8 @@ func (e *mailer) send(to []string, subject string, body string, contentType stri
 	)
 
 	recipients := strings.Join(to, ", ")
-	headers := "To: " + recipients + "\r\n" +
+	headers := "From: " + e.sender + "\r\n" +
+		"To: " + recipients + "\r\n" +
 		"Subject: " + subject + "\r\n" +
 		"MIME-version: 1.0\r\n" +
 		"Content-Type: " + contentType + "; charset=\"UTF-8\"\r\n\r\n"

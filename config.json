@@ -20,5 +20,8 @@
   "jwt": {
     "jti_len": 32,
     "issuer": "http://localhost:8888"
+  },
+  "email": {
+    "sender": "noreply@example.com"
   }
 }

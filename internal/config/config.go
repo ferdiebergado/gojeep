@@ -15,6 +15,11 @@ type Options struct {
 	DB       DBOptions       `json:"db,omitempty"`
 	Template TemplateOptions `json:"template,omitempty"`
 	JWT      JWTOptions      `json:"jwt,omitempty"`
+	Email    EmailOptions    `json:"email,omitempty"`
+}
+
+type EmailOptions struct {
+	Sender string `json:"sender,omitempty"`
 }
 
 type ServerOptions struct {
@@ -78,7 +83,7 @@ func (c DBConfig) LogValue() slog.Value {
 }
 
 type SMTPConfig struct {
-	From     string
+	User     string
 	Password string
 	Host     string
 	Port     int
@@ -138,7 +143,7 @@ func New(cfgFile string) (*Config, error) {
 			DB:      env.MustGet("POSTGRES_DB"),
 		},
 		Email: SMTPConfig{
-			From:     env.MustGet("SMTP_USER"),
+			User:     env.MustGet("SMTP_USER"),
 			Password: env.MustGet("SMTP_PASS"),
 			Host:     env.MustGet("SMTP_HOST"),
 			Port:     env.GetInt("SMTP_PORT", 587),
