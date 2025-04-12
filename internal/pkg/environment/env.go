@@ -28,3 +28,13 @@ func LoadEnv(appEnv string) error {
 
 	return nil
 }
+
+func Setup() (string, error) {
+	appEnv := env.Get("ENV", "development")
+	if appEnv != "production" {
+		if err := LoadEnv(appEnv); err != nil {
+			return "", fmt.Errorf("load env: %w", err)
+		}
+	}
+	return appEnv, nil
+}

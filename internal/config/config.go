@@ -155,3 +155,11 @@ func New(cfgFile string) (*Config, error) {
 
 	return cfg, nil
 }
+
+func LoadFile(cfgFile string) (*Config, error) {
+	cfg, err := New(cfgFile)
+	if err != nil {
+		return nil, fmt.Errorf("load config: %w", err)
+	}
+	return cfg, nil
+}

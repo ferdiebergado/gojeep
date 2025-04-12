@@ -22,7 +22,6 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/pkg/logging"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	"github.com/ferdiebergado/gojeep/internal/pkg/validation"
-	"github.com/ferdiebergado/gopherkit/env"
 	"github.com/go-playground/validator/v10"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -31,31 +30,33 @@ var validate *validator.Validate
 
 func main() {
 	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	// TODO: remove defer func
 	defer func() {
 		stop()
 		slog.Info("Signal context cleanup complete.")
 	}()
 
-	cfgFile := flag.String("cfg", "config.json", "Config file")
-	logLevel := flag.String("loglevel", "", "Log level (info/warn/error/debug)")
-	flag.Parse()
-
-	if err := run(signalCtx, cfgFile, logLevel); err != nil {
+	if err := run(signalCtx); err != nil {
 		slog.Error("fatal error", "reason", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, cfgFile, logLevel *string) error {
-	appEnv, err := setupEnvironment()
+func run(ctx context.Context) error {
+	cfgFile := flag.String("cfg", "config.json", "Config file")
+	logLevel := flag.String("loglevel", "", "Log level (info/warn/error/debug)")
+	flag.Parse()
+
+	appEnv, err := environment.Setup()
 	if err != nil {
 		return err
 	}
 
-	handler.StartPProf()
 	logging.SetLogger(os.Stdout, appEnv, *logLevel)
 
-	cfg, err := loadConfiguration(cfgFile)
+	handler.StartPProf()
+
+	cfg, err := config.LoadFile(*cfgFile)
 	if err != nil {
 		return err
 	}
@@ -84,24 +85,6 @@ func run(ctx context.Context, cfgFile, logLevel *string) error {
 	}
 
 	return shutdownServer(server, cfg)
-}
-
-func setupEnvironment() (string, error) {
-	appEnv := env.Get("ENV", "development")
-	if appEnv != "production" {
-		if err := environment.LoadEnv(appEnv); err != nil {
-			return "", fmt.Errorf("load env: %w", err)
-		}
-	}
-	return appEnv, nil
-}
-
-func loadConfiguration(cfgFile *string) (*config.Config, error) {
-	cfg, err := config.New(*cfgFile)
-	if err != nil {
-		return nil, fmt.Errorf("load config: %w", err)
-	}
-	return cfg, nil
 }
 
 func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies, error) {
