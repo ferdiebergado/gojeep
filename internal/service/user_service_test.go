@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"database/sql"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -12,13 +13,18 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/repository"
 	"github.com/ferdiebergado/gojeep/internal/repository/mock"
 	"github.com/ferdiebergado/gojeep/internal/service"
-	"github.com/ferdiebergado/gopherkit/env"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
 	mailMock "github.com/ferdiebergado/gojeep/internal/pkg/email/mock"
+	"github.com/ferdiebergado/gojeep/internal/pkg/logging"
 	secMock "github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
 )
+
+func TestMain(m *testing.M) {
+	logging.SetLogger(os.Stdout, "testing", "error")
+	os.Exit(m.Run())
+}
 
 func TestUserService_RegisterUser(t *testing.T) {
 	t.Parallel()
@@ -53,13 +59,10 @@ func TestUserService_RegisterUser(t *testing.T) {
 		Email: testEmail,
 	}
 
-	if err := env.Load("../../.env.testing"); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg, err := config.New("../../config.json")
-	if err != nil {
-		t.Fatal("failed to load config", err)
+	cfg := &config.Config{
+		App: config.AppConfig{
+			URL: "http://localhost:8888",
+		},
 	}
 
 	audience := cfg.App.URL + "/verify"
@@ -117,9 +120,10 @@ func TestUserService_VerifyUser(t *testing.T) {
 	mockMailer := mailMock.NewMockMailer(ctrl)
 	mockSigner := secMock.NewMockSigner(ctrl)
 
-	cfg, err := config.New("../../config.json")
-	if err != nil {
-		t.Fatal("failed to load config", err)
+	cfg := &config.Config{
+		App: config.AppConfig{
+			URL: "http://localhost:8888",
+		},
 	}
 
 	ctx := context.Background()
@@ -134,7 +138,7 @@ func TestUserService_VerifyUser(t *testing.T) {
 		Cfg:    cfg.App,
 	}
 	svc := service.NewUserService(deps)
-	err = svc.VerifyUser(ctx, token)
+	err := svc.VerifyUser(ctx, token)
 
 	assert.NoError(t, err)
 }
