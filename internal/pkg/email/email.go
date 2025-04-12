@@ -75,13 +75,20 @@ func (e *mailer) send(to []string, subject string, body string, contentType stri
 	message := headers + body
 	addr := fmt.Sprintf("%s:%d", host, e.port)
 
-	return smtp.SendMail(
+	err := smtp.SendMail(
 		addr,
 		auth,
 		from,
 		to,
 		[]byte(message),
 	)
+
+	if err != nil {
+		return err
+	}
+
+	slog.Info("Email sent.")
+	return nil
 }
 
 func (e *mailer) SendHTML(to []string, subject string, tmplName string, data map[string]string) error {
