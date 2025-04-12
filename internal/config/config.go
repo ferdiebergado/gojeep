@@ -10,18 +10,6 @@ import (
 	"github.com/ferdiebergado/gopherkit/env"
 )
 
-type Options struct {
-	Server   ServerOptions   `json:"server,omitempty"`
-	DB       DBOptions       `json:"db,omitempty"`
-	Template TemplateOptions `json:"template,omitempty"`
-	JWT      JWTOptions      `json:"jwt,omitempty"`
-	Email    EmailOptions    `json:"email,omitempty"`
-}
-
-type EmailOptions struct {
-	Sender string `json:"sender,omitempty"`
-}
-
 type ServerOptions struct {
 	ReadTimeout     int `json:"read_timeout,omitempty"`
 	WriteTimeout    int `json:"write_timeout,omitempty"`
@@ -46,6 +34,18 @@ type TemplateOptions struct {
 type JWTOptions struct {
 	JTILen uint32 `json:"jti_len,omitempty"`
 	Issuer string `json:"issuer,omitempty"`
+}
+
+type EmailOptions struct {
+	Sender string `json:"sender,omitempty"`
+}
+
+type Options struct {
+	Server   ServerOptions   `json:"server,omitempty"`
+	DB       DBOptions       `json:"db,omitempty"`
+	Template TemplateOptions `json:"template,omitempty"`
+	JWT      JWTOptions      `json:"jwt,omitempty"`
+	Email    EmailOptions    `json:"email,omitempty"`
 }
 
 type AppConfig struct {
