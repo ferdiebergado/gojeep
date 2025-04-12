@@ -106,7 +106,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 	return deps, nil
 }
 
-func createServer(cfg *config.Config, router *goexpress.Router) *http.Server {
+func createServer(cfg *config.Config, router http.Handler) *http.Server {
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.App.Port),
 		Handler:      router,
