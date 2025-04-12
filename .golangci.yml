@@ -43,6 +43,7 @@ linters:
     - thelper # Checks for test helpers that don't follow conventions
     - tparallel # Checks for parallel testing issues
     - unparam # Finds unused function parameters
+    - sloglint
 
   settings:
     gocyclo:
@@ -63,6 +64,18 @@ linters:
 
     misspell:
       locale: "US" # Use US English dictionary
+
+    sloglint:
+      # Enforce not mixing key-value pairs and attributes.
+      # Default: true
+      no-mixed-args: false
+      # Enforce using static values for log messages.
+      # Default: false
+      static-msg: true
+      # Enforce a single key naming convention.
+      # Values: snake, kebab, camel, pascal
+      # Default: ""
+      key-naming-case: snake
 
 issues:
   max-issues-per-linter: 0 # Report all issues per linter
