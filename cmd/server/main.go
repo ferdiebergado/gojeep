@@ -30,14 +30,11 @@ var validate *validator.Validate
 
 func main() {
 	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	// TODO: remove defer func
-	defer func() {
-		stop()
-		slog.Info("Signal context cleanup complete.")
-	}()
+	defer stop()
 
 	if err := run(signalCtx); err != nil {
 		slog.Error("fatal error", "reason", err)
+		stop()
 		os.Exit(1)
 	}
 }
