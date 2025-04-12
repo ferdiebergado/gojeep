@@ -115,15 +115,10 @@ func (c Config) LogValue() slog.Value {
 
 func New(cfgFile string) (*Config, error) {
 	slog.Info("Loading config...", "path", cfgFile)
-	cfgFile = filepath.Clean(cfgFile)
-	configFile, err := os.ReadFile(cfgFile)
-	if err != nil {
-		return nil, fmt.Errorf("open config file %s: %w", cfgFile, err)
-	}
+	opts, err := loadCfgFile(cfgFile)
 
-	var opts Options
-	if err := json.Unmarshal(configFile, &opts); err != nil {
-		return nil, fmt.Errorf("decode options %s %w", configFile, err)
+	if err != nil {
+		return nil, err
 	}
 
 	cfg := &Config{
@@ -148,7 +143,7 @@ func New(cfgFile string) (*Config, error) {
 			Host:     env.MustGet("SMTP_HOST"),
 			Port:     env.GetInt("SMTP_PORT", 587),
 		},
-		Options: opts,
+		Options: *opts,
 	}
 
 	slog.Debug("config loaded", slog.Any("config", cfg))
@@ -156,10 +151,17 @@ func New(cfgFile string) (*Config, error) {
 	return cfg, nil
 }
 
-func LoadFile(cfgFile string) (*Config, error) {
-	cfg, err := New(cfgFile)
+func loadCfgFile(cfgFile string) (*Options, error) {
+	cfgFile = filepath.Clean(cfgFile)
+	configFile, err := os.ReadFile(cfgFile)
 	if err != nil {
-		return nil, fmt.Errorf("load config: %w", err)
+		return nil, fmt.Errorf("read config file %s: %w", cfgFile, err)
 	}
-	return cfg, nil
+
+	var opts Options
+	if err := json.Unmarshal(configFile, &opts); err != nil {
+		return nil, fmt.Errorf("decode json config %s: %w", configFile, err)
+	}
+
+	return &opts, nil
 }
