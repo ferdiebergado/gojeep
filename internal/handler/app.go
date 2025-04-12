@@ -62,7 +62,7 @@ func (a *App) SetupRoutes() {
 		Hasher: a.hasher,
 		Signer: a.signer,
 		Mailer: a.mailer,
-		Cfg:    a.cfg.App,
+		Cfg:    a.cfg,
 	}
 	svc := service.NewService(deps)
 

@@ -26,7 +26,7 @@ type UserServiceDeps struct {
 	Hasher security.Hasher
 	Signer security.Signer
 	Mailer email.Mailer
-	Cfg    config.AppConfig
+	Cfg    *config.Config
 }
 
 type userService struct {
@@ -34,7 +34,7 @@ type userService struct {
 	hasher security.Hasher
 	signer security.Signer
 	mailer email.Mailer
-	cfg    config.AppConfig
+	cfg    *config.Config
 }
 
 var _ UserService = (*userService)(nil)
@@ -94,10 +94,10 @@ func (s *userService) sendVerificationEmail(user *model.User) {
 	const (
 		title   = "Email verification"
 		subject = "Verify your email"
-		ttl     = 5 * time.Minute
 	)
 
-	audience := s.cfg.URL + "/verify"
+	audience := s.cfg.App.URL + "/verify"
+	ttl := time.Duration(s.cfg.Options.Email.VerifyTTL) * time.Second
 	token, err := s.signer.Sign(user.Email, []string{audience}, ttl)
 	if err != nil {
 		slog.Error("failed to generate token", "reason", err)

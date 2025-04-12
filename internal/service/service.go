@@ -12,7 +12,7 @@ type Dependencies struct {
 	Hasher security.Hasher
 	Signer security.Signer
 	Mailer email.Mailer
-	Cfg    config.AppConfig
+	Cfg    *config.Config
 }
 
 type Service struct {

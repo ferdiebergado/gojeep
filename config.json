@@ -22,6 +22,7 @@
     "issuer": "http://localhost:8888"
   },
   "email": {
-    "sender": "noreply@example.com"
+    "sender": "noreply@example.com",
+    "verify_ttl": 300
   }
 }

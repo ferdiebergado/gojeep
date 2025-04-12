@@ -43,7 +43,8 @@ type JWTOptions struct {
 }
 
 type EmailOptions struct {
-	Sender string `json:"sender,omitempty"`
+	Sender    string `json:"sender,omitempty"`
+	VerifyTTL int    `json:"verify_ttl,omitempty"`
 }
 
 type Options struct {

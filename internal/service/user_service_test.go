@@ -63,10 +63,13 @@ func TestUserService_RegisterUser(t *testing.T) {
 		App: config.AppConfig{
 			URL: "http://localhost:8888",
 		},
+		Options: config.Options{
+			Email: config.EmailOptions{
+				VerifyTTL: 300,
+			}},
 	}
 
 	audience := cfg.App.URL + "/verify"
-	ttl := 5 * time.Minute
 	ctx := context.Background()
 	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(nil, sql.ErrNoRows)
 	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
@@ -78,12 +81,14 @@ func TestUserService_RegisterUser(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	mockSigner.EXPECT().Sign(testEmail, []string{audience}, ttl).Do(func(_ string, _ []string, _ time.Duration) {
-		defer wg.Done()
-	}).Return(token, nil)
-	mockMailer.EXPECT().SendHTML([]string{testEmail}, subject, tmpl, data).Do(func(to []string, subj, tmplName string, data map[string]string) {
-		defer wg.Done()
-	})
+	mockSigner.EXPECT().Sign(testEmail, []string{audience}, time.Duration(cfg.Options.Email.VerifyTTL)*time.Second).
+		Do(func(_ string, _ []string, _ time.Duration) {
+			defer wg.Done()
+		}).Return(token, nil)
+	mockMailer.EXPECT().SendHTML([]string{testEmail}, subject, tmpl, data).
+		Do(func(_ []string, _, _ string, _ map[string]string) {
+			defer wg.Done()
+		})
 
 	mockRepo.EXPECT().CreateUser(ctx, createParams).Return(user, nil)
 
@@ -92,7 +97,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 		Hasher: mockHasher,
 		Signer: mockSigner,
 		Mailer: mockMailer,
-		Cfg:    cfg.App,
+		Cfg:    cfg,
 	}
 
 	userService := service.NewUserService(deps)
@@ -135,7 +140,7 @@ func TestUserService_VerifyUser(t *testing.T) {
 		Hasher: mockHasher,
 		Signer: mockSigner,
 		Mailer: mockMailer,
-		Cfg:    cfg.App,
+		Cfg:    cfg,
 	}
 	svc := service.NewUserService(deps)
 	err := svc.VerifyUser(ctx, token)
