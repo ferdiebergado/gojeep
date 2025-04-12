@@ -16,8 +16,12 @@ func unprocessableResponse(w http.ResponseWriter, r *http.Request, err error) {
 	errorResponse(w, r, http.StatusUnprocessableEntity, err, err.Error())
 }
 
+func unauthorizedResponse(w http.ResponseWriter, r *http.Request, err error) {
+	errorResponse(w, r, http.StatusUnauthorized, err, err.Error())
+}
+
 func errorResponse(w http.ResponseWriter, r *http.Request, status int, err error, msg string) {
-	slog.Error("server error", "reason", err, "request", fmt.Sprint(r))
+	slog.Error("client error", "reason", err, "request", fmt.Sprint(r))
 	res := Response[any]{
 		Message: msg,
 	}
