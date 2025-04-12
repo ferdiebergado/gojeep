@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"os"
 	"sync"
 	"testing"
@@ -146,4 +147,100 @@ func TestUserService_VerifyUser(t *testing.T) {
 	err := svc.VerifyUser(ctx, token)
 
 	assert.NoError(t, err)
+}
+
+func TestUserService_LoginUser(t *testing.T) {
+	t.Parallel()
+	const (
+		testEmail  = "abc@example.com"
+		testPass   = "test"
+		hashedPass = "hashed"
+	)
+
+	cfg := &config.Config{App: config.AppConfig{URL: "http://localhost:8888"}}
+	loginParams := service.LoginUserParams{Email: testEmail, Password: testPass}
+	user := &model.User{
+		Model:        model.Model{ID: "1"},
+		Email:        testEmail,
+		PasswordHash: hashedPass,
+	}
+
+	testCases := []struct {
+		name         string
+		repoUser     *model.User
+		repoErr      error
+		hasherResult bool
+		hasherErr    error
+		wantOk       bool
+		wantErr      error
+	}{
+		{
+			name:         "Success_ValidCredentials",
+			repoUser:     user,
+			hasherResult: true,
+			wantOk:       true,
+		},
+		{
+			name:    "Failure_UserNotFound",
+			repoErr: service.ErrUserNotFound,
+			wantOk:  false,
+			wantErr: service.ErrUserNotFound,
+		},
+		{
+			name:         "Failure_InvalidPassword",
+			repoUser:     user,
+			hasherResult: false,
+			wantOk:       false,
+		},
+		{
+			name:    "Failure_RepoError",
+			repoErr: errors.New("database failure"),
+			wantOk:  false,
+			wantErr: errors.New("database failure"),
+		},
+		{
+			name:      "Failure_HasherError",
+			repoUser:  user,
+			hasherErr: errors.New("hash mismatch"),
+			wantOk:    false,
+			wantErr:   errors.New("hash mismatch"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := mock.NewMockUserRepo(ctrl)
+			mockHasher := secMock.NewMockHasher(ctrl)
+
+			ctx := context.Background()
+			mockRepo.EXPECT().
+				FindUserByEmail(ctx, testEmail).
+				Return(tc.repoUser, tc.repoErr)
+
+			if tc.repoErr == nil {
+				mockHasher.EXPECT().
+					Verify(testPass, hashedPass).
+					Return(tc.hasherResult, tc.hasherErr)
+			}
+
+			svc := service.NewUserService(&service.UserServiceDeps{
+				Repo:   mockRepo,
+				Hasher: mockHasher,
+				Cfg:    cfg,
+			})
+
+			ok, err := svc.LoginUser(ctx, loginParams)
+
+			assert.Equal(t, tc.wantOk, ok)
+			if tc.wantErr != nil {
+				assert.ErrorContains(t, err, tc.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }

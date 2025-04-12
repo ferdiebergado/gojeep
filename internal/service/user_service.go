@@ -19,6 +19,7 @@ import (
 type UserService interface {
 	RegisterUser(ctx context.Context, params RegisterUserParams) (*model.User, error)
 	VerifyUser(ctx context.Context, token string) error
+	LoginUser(ctx context.Context, params LoginUserParams) (bool, error)
 }
 
 type UserServiceDeps struct {
@@ -38,6 +39,7 @@ type userService struct {
 }
 
 var _ UserService = (*userService)(nil)
+var ErrUserNotFound = errors.New("invalid email or password")
 
 func NewUserService(deps *UserServiceDeps) UserService {
 	return &userService{
@@ -50,6 +52,11 @@ func NewUserService(deps *UserServiceDeps) UserService {
 }
 
 type RegisterUserParams struct {
+	Email    string
+	Password string
+}
+
+type LoginUserParams struct {
 	Email    string
 	Password string
 }
@@ -122,4 +129,16 @@ func (s *userService) VerifyUser(ctx context.Context, token string) error {
 	}
 
 	return s.repo.VerifyUser(ctx, email)
+}
+
+func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (bool, error) {
+	user, err := s.repo.FindUserByEmail(ctx, params.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, ErrUserNotFound
+		}
+		return false, err
+	}
+
+	return s.hasher.Verify(params.Password, user.PasswordHash)
 }

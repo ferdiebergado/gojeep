@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/ferdiebergado/goexpress"
 	"github.com/ferdiebergado/gojeep/internal/handler"
 	"github.com/ferdiebergado/gojeep/internal/model"
+	"github.com/ferdiebergado/gojeep/internal/pkg/logging"
 	"github.com/ferdiebergado/gojeep/internal/pkg/message"
 	"github.com/ferdiebergado/gojeep/internal/service"
 	"github.com/ferdiebergado/gojeep/internal/service/mock"
@@ -34,6 +35,15 @@ type testCase struct {
 	expectedStatus int
 	expectedMsg    string
 	verifyResponse func(t *testing.T, res handler.Response[handler.RegisterUserResponse])
+}
+
+var validate *validator.Validate
+
+func TestMain(m *testing.M) {
+	logging.SetLogger(os.Stderr, "testing", "error")
+	validate = validator.New()
+
+	os.Exit(m.Run())
 }
 
 func TestUserHandler_HandleUserRegister(t *testing.T) {
@@ -124,7 +134,6 @@ func TestUserHandler_HandleUserRegister(t *testing.T) {
 func runRegisterUserTest(t *testing.T, tc testCase) {
 	t.Helper()
 
-	validate := validator.New()
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -135,12 +144,9 @@ func runRegisterUserTest(t *testing.T, tc testCase) {
 	}
 
 	userHandler := handler.NewUserHandler(mockService)
-
-	r := goexpress.New()
-	r.Post(regURL, userHandler.HandleUserRegister,
-		handler.DecodeJSON[handler.RegisterUserRequest](),
-		handler.ValidateInput[handler.RegisterUserRequest](validate),
-	)
+	registerHandler := handler.ValidateInput[handler.RegisterUserRequest](validate)(
+		http.HandlerFunc(userHandler.HandleUserRegister))
+	registerHandler = handler.DecodeJSON[handler.RegisterUserRequest]()(registerHandler)
 
 	reqBody, err := json.Marshal(tc.request)
 	require.NoError(t, err, "failed to marshal request")
@@ -149,7 +155,7 @@ func runRegisterUserTest(t *testing.T, tc testCase) {
 	req.Header.Set(handler.HeaderContentType, handler.MimeJSON)
 	rec := httptest.NewRecorder()
 
-	r.ServeHTTP(rec, req)
+	registerHandler.ServeHTTP(rec, req)
 
 	res := rec.Result()
 	defer res.Body.Close()
@@ -164,5 +170,114 @@ func runRegisterUserTest(t *testing.T, tc testCase) {
 
 	if tc.verifyResponse != nil {
 		tc.verifyResponse(t, apiRes)
+	}
+}
+
+func TestUserHandler_HandleUserLogin(t *testing.T) {
+	t.Parallel()
+	const url = "/auth/login"
+	ctrl := gomock.NewController(t)
+
+	tests := []struct {
+		name            string
+		email           string
+		password        string
+		expectedStatus  int
+		expectedMessage string
+		mockServiceCall func(mockService *mock.MockUserService)
+	}{
+		{
+			name:            "Valid login credentials",
+			email:           testEmail,
+			password:        testPass,
+			expectedStatus:  http.StatusOK,
+			expectedMessage: "Login successful!",
+			mockServiceCall: func(mockService *mock.MockUserService) {
+				mockService.EXPECT().
+					LoginUser(gomock.Any(), service.LoginUserParams{
+						Email:    testEmail,
+						Password: testPass,
+					}).
+					Return(true, nil)
+			},
+		},
+		{
+			name:            "Invalid email",
+			email:           "notanemail",
+			password:        testPass,
+			expectedStatus:  http.StatusBadRequest,
+			expectedMessage: "Invalid input.",
+			mockServiceCall: func(mockService *mock.MockUserService) {
+			},
+		},
+		{
+			name:            "Blank email",
+			password:        testPass,
+			expectedStatus:  http.StatusBadRequest,
+			expectedMessage: "Invalid input.",
+			mockServiceCall: func(mockService *mock.MockUserService) {
+			},
+		},
+		{
+			name:            "Blank password",
+			email:           testEmail,
+			expectedStatus:  http.StatusBadRequest,
+			expectedMessage: "Invalid input.",
+			mockServiceCall: func(mockService *mock.MockUserService) {
+			},
+		},
+		{
+			name:            "Login failure",
+			email:           testEmail,
+			password:        "wrongpass",
+			expectedStatus:  http.StatusUnauthorized,
+			expectedMessage: "invalid email or password",
+			mockServiceCall: func(mockService *mock.MockUserService) {
+				mockService.EXPECT().
+					LoginUser(gomock.Any(), service.LoginUserParams{
+						Email:    testEmail,
+						Password: "wrongpass",
+					}).
+					Return(false, nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			mockService := mock.NewMockUserService(ctrl)
+			tt.mockServiceCall(mockService)
+
+			userHandler := handler.NewUserHandler(mockService)
+			userLoginHandler := handler.ValidateInput[handler.UserLoginRequest](validate)(
+				http.HandlerFunc(userHandler.HandleUserLogin))
+			userLoginHandler = handler.DecodeJSON[handler.UserLoginRequest]()(userLoginHandler)
+
+			loginRequest := handler.UserLoginRequest{
+				Email:    tt.email,
+				Password: tt.password,
+			}
+			reqBody, err := json.Marshal(loginRequest)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			req := httptest.NewRequest(http.MethodPost, url, bytes.NewReader(reqBody))
+			req.Header.Set(handler.HeaderContentType, handler.MimeJSON)
+			rec := httptest.NewRecorder()
+
+			userLoginHandler.ServeHTTP(rec, req)
+			res := rec.Result()
+			defer res.Body.Close()
+
+			assert.Equal(t, tt.expectedStatus, res.StatusCode)
+
+			if tt.expectedMessage != "" {
+				var apiRes handler.Response[any]
+				require.NoError(t, json.NewDecoder(res.Body).Decode(&apiRes), "failed to decode response")
+				assert.Equal(t, tt.expectedMessage, apiRes.Message)
+			}
+		})
 	}
 }

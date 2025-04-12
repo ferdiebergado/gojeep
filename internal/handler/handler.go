@@ -127,3 +127,37 @@ func (h *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	}
 	response.JSON(w, r, http.StatusOK, res)
 }
+
+type UserLoginRequest struct {
+	Email    string `json:"email,omitempty" validate:"required,email"`
+	Password string `json:"password,omitempty" validate:"required"`
+}
+
+func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
+	_, req, _ := FromParamsContext[UserLoginRequest](r.Context())
+	params := service.LoginUserParams{
+		Email:    req.Email,
+		Password: req.Password,
+	}
+	ok, err := h.service.LoginUser(r.Context(), params)
+	if err != nil {
+		if errors.Is(err, service.ErrUserNotFound) {
+			unauthorizedResponse(w, r, err)
+			return
+		}
+		response.ServerError(w, r, err)
+		return
+	}
+
+	if !ok {
+		unauthorizedResponse(w, r, service.ErrUserNotFound)
+		return
+	}
+
+	// TODO: move message to messages
+	res := Response[any]{
+		Message: "Login successful!",
+	}
+
+	response.JSON(w, r, http.StatusOK, res)
+}
