@@ -16,21 +16,22 @@ func DecodeJSON[T any]() goexpress.Middleware {
 			slog.Info("Checking content-type...")
 			contentType := r.Header.Get(HeaderContentType)
 
-			if contentType == MimeJSON {
-				slog.Info("Decoding json body...")
-				var decoded T
-				decoder := json.NewDecoder(r.Body)
-				decoder.DisallowUnknownFields()
-				if err := decoder.Decode(&decoded); err != nil {
-					badRequestResponse(w, r, err)
-					return
-				}
-				ctx := NewParamsContext(r.Context(), decoded)
-				r = r.WithContext(ctx)
-				next.ServeHTTP(w, r)
-			} else {
+			if contentType != MimeJSON {
 				badRequestResponse(w, r, fmt.Errorf("Invalid content-type: %s", contentType))
+				return
 			}
+
+			slog.Info("Decoding json body...")
+			var decoded T
+			decoder := json.NewDecoder(r.Body)
+			decoder.DisallowUnknownFields()
+			if err := decoder.Decode(&decoded); err != nil {
+				badRequestResponse(w, r, err)
+				return
+			}
+			ctx := NewParamsContext(r.Context(), decoded)
+			r = r.WithContext(ctx)
+			next.ServeHTTP(w, r)
 		})
 	}
 }
