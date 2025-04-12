@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ferdiebergado/goexpress"
 	"github.com/ferdiebergado/gojeep/internal/handler"
 	"github.com/ferdiebergado/gojeep/internal/pkg/message"
 	"github.com/ferdiebergado/gojeep/internal/service/mock"
@@ -26,12 +25,11 @@ func TestHandlerHandleHealth(t *testing.T) {
 	mockService := mock.NewMockService(ctrl)
 	mockService.EXPECT().PingDB(context.Background()).Return(nil)
 	baseHandler := handler.NewBaseHandler(mockService)
-	r := goexpress.New()
-	r.Get(url, baseHandler.HandleHealth)
+	healthHandler := http.HandlerFunc(baseHandler.HandleHealth)
 
-	req := httptest.NewRequest("GET", url, nil)
+	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rr := httptest.NewRecorder()
-	r.ServeHTTP(rr, req)
+	healthHandler.ServeHTTP(rr, req)
 
 	res := rr.Result()
 	defer res.Body.Close()
