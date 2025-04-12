@@ -10,6 +10,12 @@ import (
 	"github.com/ferdiebergado/gopherkit/env"
 )
 
+const (
+	envDefaultAppPort  = 8888
+	envDefaultDBPort   = 5432
+	envDefaultSMTPPort = 587
+)
+
 type ServerOptions struct {
 	ReadTimeout     int `json:"read_timeout,omitempty"`
 	WriteTimeout    int `json:"write_timeout,omitempty"`
@@ -124,7 +130,7 @@ func New(cfgFile string) (*Config, error) {
 	cfg := &Config{
 		App: AppConfig{
 			URL:      env.MustGet("APP_URL"),
-			Port:     env.GetInt("PORT", 8888),
+			Port:     env.GetInt("PORT", envDefaultAppPort),
 			Key:      env.MustGet("APP_KEY"),
 			Env:      env.Get("ENV", "development"),
 			LogLevel: env.Get("LOG_LEVEL", "INFO"),
@@ -133,7 +139,7 @@ func New(cfgFile string) (*Config, error) {
 			User:    env.MustGet("POSTGRES_USER"),
 			Pass:    env.MustGet("POSTGRES_PASSWORD"),
 			Host:    env.MustGet("POSTGRES_HOST"),
-			Port:    env.GetInt("POSTGRES_PORT", 5432),
+			Port:    env.GetInt("POSTGRES_PORT", envDefaultDBPort),
 			SSLMode: env.MustGet("POSTGRES_SSLMODE"),
 			DB:      env.MustGet("POSTGRES_DB"),
 		},
@@ -141,7 +147,7 @@ func New(cfgFile string) (*Config, error) {
 			User:     env.MustGet("SMTP_USER"),
 			Password: env.MustGet("SMTP_PASS"),
 			Host:     env.MustGet("SMTP_HOST"),
-			Port:     env.GetInt("SMTP_PORT", 587),
+			Port:     env.GetInt("SMTP_PORT", envDefaultSMTPPort),
 		},
 		Options: *opts,
 	}
