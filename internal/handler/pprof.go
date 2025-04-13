@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -14,9 +14,9 @@ func StartPProf() {
 
 	go func() {
 		const port = "6060"
-		log.Println("pprof listening on :" + port)
+		slog.Info("pprof listening", "port", port)
 		if err := http.ListenAndServe("localhost:"+port, nil); err != nil {
-			log.Printf("pprof server error: %v", err)
+			slog.Error("pprof server error", "reason", err)
 		}
 	}()
 }
