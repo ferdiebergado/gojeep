@@ -141,7 +141,7 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	ok, err := h.service.LoginUser(r.Context(), params)
 	if err != nil {
-		if errors.Is(err, service.ErrUserNotFound) || errors.Is(err, service.ErrUnverifiedUser) {
+		if errors.Is(err, service.ErrUserNotFound) || errors.Is(err, service.ErrUserNotVerified) {
 			unauthorizedResponse(w, r, err)
 			return
 		}
