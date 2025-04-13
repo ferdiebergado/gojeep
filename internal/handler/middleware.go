@@ -6,11 +6,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/ferdiebergado/goexpress"
 	"github.com/go-playground/validator/v10"
 )
 
-func DecodeJSON[T any]() goexpress.Middleware {
+func DecodeJSON[T any]() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			slog.Info("Checking content-type...")
@@ -36,7 +35,7 @@ func DecodeJSON[T any]() goexpress.Middleware {
 	}
 }
 
-func ValidateInput[T any](validate *validator.Validate) goexpress.Middleware {
+func ValidateInput[T any](validate *validator.Validate) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			slog.Info("Validating input...")
