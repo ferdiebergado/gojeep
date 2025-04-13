@@ -45,7 +45,7 @@ func (r *userRepo) CreateUser(ctx context.Context, params CreateUserParams) (*mo
 }
 
 const QueryUserFindByEmail = `
-SELECT id, email, password_hash, created_at, updated_at FROM users
+SELECT id, email, password_hash, created_at, updated_at, verified_at FROM users
 WHERE email = $1
 LIMIT 1
 `
@@ -53,7 +53,7 @@ LIMIT 1
 func (r *userRepo) FindUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
 	if err := r.db.QueryRowContext(ctx, QueryUserFindByEmail, email).
-		Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt); err != nil {
+		Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt, &user.VerifiedAt); err != nil {
 		return nil, err
 	}
 	return &user, nil

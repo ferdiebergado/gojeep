@@ -18,12 +18,13 @@ const (
 	passwordHash = "password_hash"
 	createdAt    = "created_at"
 	updatedAt    = "updated_at"
+	verifiedAt   = "verified_at"
 )
 
 var (
 	sqlmockOpts = sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual)
-	cols        = []string{id, email, passwordHash, createdAt, updatedAt}
-	colsNoEmail = []string{id, passwordHash, createdAt, updatedAt}
+	cols        = []string{id, email, passwordHash, createdAt, updatedAt, verifiedAt}
+	colsNoEmail = []string{id, passwordHash, createdAt, updatedAt, verifiedAt}
 )
 
 func TestUserRepo_CreateUser(t *testing.T) {
@@ -142,7 +143,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 				mock.ExpectQuery(repository.QueryUserFindByEmail).
 					WithArgs("test@abc.com").
 					WillReturnRows(sqlmock.NewRows(cols).
-						AddRow("1", "test@abc.com", "hashed", now, now))
+						AddRow("1", "test@abc.com", "hashed", now, now, new(time.Time)))
 			},
 			expectedEmail: "test@abc.com",
 			expectErr:     false,
@@ -174,7 +175,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 				mock.ExpectQuery(repository.QueryUserFindByEmail).
 					WithArgs("scan@abc.com").
 					WillReturnRows(sqlmock.NewRows(colsNoEmail).
-						AddRow("1", "hashed", now, now))
+						AddRow("1", "hashed", now, now, new(time.Time)))
 			},
 			expectErr: true,
 		},

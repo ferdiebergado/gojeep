@@ -163,6 +163,7 @@ func TestUserService_LoginUser(t *testing.T) {
 		Model:        model.Model{ID: "1"},
 		Email:        testEmail,
 		PasswordHash: hashedPass,
+		VerifiedAt:   time.Date(2024, 1, 1, 1, 1, 1, 1, time.UTC),
 	}
 
 	testCases := []struct {
@@ -185,6 +186,17 @@ func TestUserService_LoginUser(t *testing.T) {
 			repoErr: service.ErrUserNotFound,
 			wantOk:  false,
 			wantErr: service.ErrUserNotFound,
+		},
+		{
+			name: "Failure_UserUnverified",
+			repoUser: &model.User{
+				Model:        model.Model{ID: "1"},
+				Email:        testEmail,
+				PasswordHash: hashedPass,
+			},
+			repoErr: service.ErrUnverifiedUser,
+			wantOk:  false,
+			wantErr: service.ErrUnverifiedUser,
 		},
 		{
 			name:         "Failure_InvalidPassword",

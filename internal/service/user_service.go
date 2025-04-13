@@ -39,7 +39,10 @@ type userService struct {
 }
 
 var _ UserService = (*userService)(nil)
-var ErrUserNotFound = errors.New("invalid email or password")
+var (
+	ErrUserNotFound   = errors.New("invalid email or password")
+	ErrUnverifiedUser = errors.New("unverified user")
+)
 
 func NewUserService(deps *UserServiceDeps) UserService {
 	return &userService{
@@ -138,6 +141,10 @@ func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (bo
 			return false, ErrUserNotFound
 		}
 		return false, err
+	}
+
+	if user.VerifiedAt.IsZero() {
+		return false, ErrUnverifiedUser
 	}
 
 	return s.hasher.Verify(params.Password, user.PasswordHash)
