@@ -70,7 +70,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 			}},
 	}
 
-	audience := cfg.App.URL + "/verify"
+	audience := cfg.App.URL + "/auth/verify"
 	ctx := context.Background()
 	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(nil, sql.ErrNoRows)
 	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
