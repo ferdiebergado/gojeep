@@ -9,7 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const aud = "localhost/verify"
+const (
+	aud      = "localhost/verify"
+	testUser = "testuser"
+)
 
 var audience = []string{aud}
 
@@ -25,7 +28,7 @@ func TestJWTSignAndVerify(t *testing.T) {
 	}
 	jwtHandler := security.NewSigner(cfg)
 
-	subject := "testuser"
+	subject := testUser
 	ttl := 24 * time.Hour
 	tokenString, err := jwtHandler.Sign(subject, audience, ttl)
 	assert.NoError(t, err)
@@ -64,7 +67,7 @@ func TestJWTVerifyModifiedToken(t *testing.T) {
 	}
 	jwtHandler := security.NewSigner(cfg)
 
-	subject := "testuser"
+	subject := testUser
 	ttl := 24 * time.Hour
 
 	tokenString, err := jwtHandler.Sign(subject, audience, ttl)
@@ -87,7 +90,7 @@ func TestJWTVerifyExpiredToken(t *testing.T) {
 	}
 	jwtHandler := security.NewSigner(cfg)
 
-	subject := "testuser"
+	subject := testUser
 	ttl := -1 * time.Hour
 
 	tokenString, err := jwtHandler.Sign(subject, audience, ttl)
@@ -112,7 +115,7 @@ func TestJWTVerifyWrongSigningKey(t *testing.T) {
 	}
 	jwtHandler := security.NewSigner(cfg)
 
-	subject := "testuser"
+	subject := testUser
 	ttl := 24 * time.Hour
 
 	tokenString, err := jwtHandler.Sign(subject, audience, ttl)
