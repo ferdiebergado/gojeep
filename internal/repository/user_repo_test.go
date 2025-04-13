@@ -12,17 +12,18 @@ import (
 )
 
 const (
-	stubDbErr = "an error '%s' was not expected when opening a stub database connection"
-	id        = "id"
-	email     = "email"
-	createdAt = "created_at"
-	updatedAt = "updated_at"
+	stubDbErr    = "an error '%s' was not expected when opening a stub database connection"
+	id           = "id"
+	email        = "email"
+	passwordHash = "password_hash"
+	createdAt    = "created_at"
+	updatedAt    = "updated_at"
 )
 
 var (
 	sqlmockOpts = sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual)
-	cols        = []string{id, email, createdAt, updatedAt}
-	colsNoEmail = []string{id, createdAt, updatedAt}
+	cols        = []string{id, email, passwordHash, createdAt, updatedAt}
+	colsNoEmail = []string{id, passwordHash, createdAt, updatedAt}
 )
 
 func TestUserRepo_CreateUser(t *testing.T) {
@@ -58,7 +59,7 @@ func TestUserRepo_CreateUser(t *testing.T) {
 			mockSetup: func() {
 				mock.ExpectQuery(repository.QueryUserCreate).
 					WithArgs(email1, "hashed").
-					WillReturnRows(sqlmock.NewRows(cols).
+					WillReturnRows(sqlmock.NewRows([]string{id, email, createdAt, updatedAt}).
 						AddRow("1", email1, now, now))
 			},
 			expectedEmail: email1,
@@ -86,7 +87,7 @@ func TestUserRepo_CreateUser(t *testing.T) {
 			mockSetup: func() {
 				mock.ExpectQuery(repository.QueryUserCreate).
 					WithArgs(email3, "hashed").
-					WillReturnRows(sqlmock.NewRows(colsNoEmail).
+					WillReturnRows(sqlmock.NewRows([]string{id, createdAt, updatedAt}).
 						AddRow("1", now, now))
 			},
 			expectErr: true,
@@ -141,7 +142,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 				mock.ExpectQuery(repository.QueryUserFindByEmail).
 					WithArgs("test@abc.com").
 					WillReturnRows(sqlmock.NewRows(cols).
-						AddRow("1", "test@abc.com", now, now))
+						AddRow("1", "test@abc.com", "hashed", now, now))
 			},
 			expectedEmail: "test@abc.com",
 			expectErr:     false,
@@ -173,7 +174,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 				mock.ExpectQuery(repository.QueryUserFindByEmail).
 					WithArgs("scan@abc.com").
 					WillReturnRows(sqlmock.NewRows(colsNoEmail).
-						AddRow("1", now, now))
+						AddRow("1", "hashed", now, now))
 			},
 			expectErr: true,
 		},
