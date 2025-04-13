@@ -1,3 +1,4 @@
+#:schema ./air.schema.json
 root = "."
 testdata_dir = "testdata"
 tmp_dir = "tmp"
@@ -26,7 +27,7 @@ full_bin = ""
 include_dir = []
 include_ext = ["go", "tpl", "tmpl", "html", "js", "css"]
 include_file = []
-kill_delay = "0s"
+kill_delay = "3s"
 log = "build-errors.log"
 poll = false
 poll_interval = 0
