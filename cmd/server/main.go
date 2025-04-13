@@ -129,7 +129,8 @@ func startServer(server *http.Server, cfg *config.Config) chan error {
 
 func shutdownServer(server *http.Server, cfg *config.Config) error {
 	slog.Info("Shutting down server...")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Options.Server.ShutdownTimeout)*time.Second)
+	timeout := time.Duration(cfg.Options.Server.ShutdownTimeout) * time.Second
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
