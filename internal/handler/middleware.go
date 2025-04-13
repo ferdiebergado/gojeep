@@ -20,7 +20,7 @@ func DecodeJSON[T any]() func(next http.Handler) http.Handler {
 				return
 			}
 
-			slog.Info("Decoding json body...")
+			slog.Info("Decoding json payload...")
 			var decoded T
 			decoder := json.NewDecoder(r.Body)
 			decoder.DisallowUnknownFields()
