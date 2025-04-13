@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ferdiebergado/goexpress"
 	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/handler"
 	"github.com/ferdiebergado/gojeep/internal/infra/db"
@@ -85,7 +84,7 @@ func run(ctx context.Context) error {
 }
 
 func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies, error) {
-	router := goexpress.New()
+	router := handler.NewRouter()
 	validate = validation.New()
 	hasher := &security.Argon2Hasher{}
 	mailer, err := email.New(cfg)

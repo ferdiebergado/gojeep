@@ -15,7 +15,7 @@ import (
 type App struct {
 	cfg       *config.Config
 	db        *sql.DB
-	router    *goexpress.Router
+	router    Router
 	validater *validator.Validate
 	hasher    security.Hasher
 	mailer    email.Mailer
@@ -25,7 +25,7 @@ type App struct {
 type AppDependencies struct {
 	Config    *config.Config
 	DB        *sql.DB
-	Router    *goexpress.Router
+	Router    Router
 	Validator *validator.Validate
 	Hasher    security.Hasher
 	Mailer    email.Mailer
@@ -46,7 +46,7 @@ func NewApp(deps *AppDependencies) *App {
 	return app
 }
 
-func (a *App) Router() *goexpress.Router {
+func (a *App) Router() Router {
 	return a.router
 }
 
