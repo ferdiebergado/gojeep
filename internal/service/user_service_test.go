@@ -194,9 +194,9 @@ func TestUserService_LoginUser(t *testing.T) {
 				Email:        testEmail,
 				PasswordHash: hashedPass,
 			},
-			repoErr: service.ErrUnverifiedUser,
+			repoErr: service.ErrUserNotVerified,
 			wantOk:  false,
-			wantErr: service.ErrUnverifiedUser,
+			wantErr: service.ErrUserNotVerified,
 		},
 		{
 			name:         "Failure_InvalidPassword",

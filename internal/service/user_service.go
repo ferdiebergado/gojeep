@@ -40,8 +40,8 @@ type userService struct {
 
 var _ UserService = (*userService)(nil)
 var (
-	ErrUserNotFound   = errors.New("invalid email or password")
-	ErrUnverifiedUser = errors.New("unverified user")
+	ErrUserNotFound    = errors.New("invalid email or password")
+	ErrUserNotVerified = errors.New("email not verified")
 )
 
 func NewUserService(deps *UserServiceDeps) UserService {
@@ -106,7 +106,7 @@ func (s *userService) sendVerificationEmail(user *model.User) {
 		subject = "Verify your email"
 	)
 
-	audience := s.cfg.App.URL + "/verify"
+	audience := s.cfg.App.URL + "/auth/verify"
 	ttl := time.Duration(s.cfg.Options.Email.VerifyTTL) * time.Second
 	token, err := s.signer.Sign(user.Email, []string{audience}, ttl)
 	if err != nil {
@@ -144,7 +144,7 @@ func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (bo
 	}
 
 	if user.VerifiedAt.IsZero() {
-		return false, ErrUnverifiedUser
+		return false, ErrUserNotVerified
 	}
 
 	return s.hasher.Verify(params.Password, user.PasswordHash)
