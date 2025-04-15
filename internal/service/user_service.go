@@ -59,9 +59,17 @@ type RegisterUserParams struct {
 	Password string
 }
 
+func (p *RegisterUserParams) LogValue() slog.Value {
+	return slog.AnyValue(nil)
+}
+
 type LoginUserParams struct {
 	Email    string
 	Password string
+}
+
+func (p *LoginUserParams) LogValue() slog.Value {
+	return slog.AnyValue(nil)
 }
 
 type DuplicateUserError struct {

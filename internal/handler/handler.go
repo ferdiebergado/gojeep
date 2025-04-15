@@ -71,6 +71,10 @@ type RegisterUserRequest struct {
 	PasswordConfirm string `json:"password_confirm,omitempty" validate:"required,eqfield=Password"`
 }
 
+func (r *RegisterUserRequest) LogValue() slog.Value {
+	return slog.AnyValue(nil)
+}
+
 type RegisterUserResponse struct {
 	ID        string    `json:"id"`
 	Email     string    `json:"email"`
@@ -131,6 +135,10 @@ func (h *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 type UserLoginRequest struct {
 	Email    string `json:"email,omitempty" validate:"required,email"`
 	Password string `json:"password,omitempty" validate:"required"`
+}
+
+func (r *UserLoginRequest) LogValue() slog.Value {
+	return slog.AnyValue(nil)
 }
 
 func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
