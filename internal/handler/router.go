@@ -19,51 +19,51 @@ type Router interface {
 }
 
 type router struct {
-	router *goexpress.Router
+	handler *goexpress.Router
 }
 
 var _ Router = (*router)(nil)
 
 func NewRouter() Router {
 	return &router{
-		router: goexpress.New(),
+		handler: goexpress.New(),
 	}
 }
 
 func (r *router) Delete(pattern string, handlerFunc http.HandlerFunc, middlewares ...func(next http.Handler) http.Handler) {
-	r.router.Delete(pattern, handlerFunc, middlewares...)
+	r.handler.Delete(pattern, handlerFunc, middlewares...)
 }
 
 func (r *router) Get(pattern string, handlerFunc http.HandlerFunc, middlewares ...func(next http.Handler) http.Handler) {
-	r.router.Get(pattern, handlerFunc, middlewares...)
+	r.handler.Get(pattern, handlerFunc, middlewares...)
 }
 
 func (r *router) Group(prefix string, grpFunc func(Router) Router, middlewares ...func(next http.Handler) http.Handler) {
 	grpHandler := grpFunc(NewRouter())
 
-	r.router.Handle(prefix+"/", http.StripPrefix(prefix, grpHandler), middlewares...)
+	r.handler.Handle(prefix+"/", http.StripPrefix(prefix, grpHandler), middlewares...)
 }
 
 func (r *router) Options(pattern string, handlerFunc http.HandlerFunc, middlewares ...func(next http.Handler) http.Handler) {
-	r.router.Options(pattern, handlerFunc, middlewares...)
+	r.handler.Options(pattern, handlerFunc, middlewares...)
 }
 
 func (r *router) Patch(pattern string, handlerFunc http.HandlerFunc, middlewares ...func(next http.Handler) http.Handler) {
-	r.router.Patch(pattern, handlerFunc, middlewares...)
+	r.handler.Patch(pattern, handlerFunc, middlewares...)
 }
 
 func (r *router) Post(pattern string, handlerFunc http.HandlerFunc, middlewares ...func(next http.Handler) http.Handler) {
-	r.router.Post(pattern, handlerFunc, middlewares...)
+	r.handler.Post(pattern, handlerFunc, middlewares...)
 }
 
 func (r *router) Put(pattern string, handlerFunc http.HandlerFunc, middlewares ...func(next http.Handler) http.Handler) {
-	r.router.Put(pattern, handlerFunc, middlewares...)
+	r.handler.Put(pattern, handlerFunc, middlewares...)
 }
 
 func (r *router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.router.ServeHTTP(w, req)
+	r.handler.ServeHTTP(w, req)
 }
 
 func (r *router) Use(middleware func(next http.Handler) http.Handler) {
-	r.router.Use(middleware)
+	r.handler.Use(middleware)
 }
