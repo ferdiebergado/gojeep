@@ -73,7 +73,7 @@ func (c DBConfig) LogValue() slog.Value {
 type EmailOptions struct {
 	Sender       string `json:"sender,omitempty"`
 	VerifyTTL    int    `json:"verify_ttl,omitempty"`
-	TemplatePath string `json:"path,omitempty"`
+	TemplatePath string `json:"template_path,omitempty"`
 	LayoutFile   string `json:"layout_file,omitempty"`
 }
 
