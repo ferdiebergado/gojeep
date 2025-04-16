@@ -151,7 +151,7 @@ func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (bo
 		return false, err
 	}
 
-	if user.VerifiedAt.IsZero() {
+	if !user.VerifiedAt.Valid {
 		return false, ErrUserNotVerified
 	}
 

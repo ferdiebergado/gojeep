@@ -164,7 +164,10 @@ func TestUserService_LoginUser(t *testing.T) {
 		Model:        model.Model{ID: "1"},
 		Email:        testEmail,
 		PasswordHash: hashedPass,
-		VerifiedAt:   time.Date(2024, 1, 1, 1, 1, 1, 1, time.UTC),
+		VerifiedAt: sql.NullTime{
+			Time:  time.Date(2024, 1, 1, 1, 1, 1, 1, time.UTC),
+			Valid: true,
+		},
 	}
 
 	testCases := []struct {
