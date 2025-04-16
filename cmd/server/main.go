@@ -70,20 +70,20 @@ func run(ctx context.Context) error {
 	app := newApp(deps)
 	app.SetupRoutes()
 
-	server := server.New(&cfg.Server, app.Router())
-	serverErr := server.Start()
+	apiServer := server.New(&cfg.Server, app.Router())
+	apiServerErr := apiServer.Start()
 	select {
 	case <-ctx.Done():
 		slog.Info("Shutdown signal received.")
-	case err := <-serverErr:
+	case err := <-apiServerErr:
 		return fmt.Errorf("server error: %w", err)
 	}
 
-	return server.Shutdown()
+	return apiServer.Shutdown()
 }
 
 func setupDependencies(cfg *config.Config, db *sql.DB) (*dependencies, error) {
-	router := router.New()
+	httpRouter := router.New()
 	validate = validation.New()
 	hasher := &security.Argon2Hasher{}
 	mailer, err := email.New(&cfg.Email)
@@ -95,7 +95,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*dependencies, error) {
 	deps := &dependencies{
 		Config:    cfg,
 		DB:        db,
-		Router:    router,
+		Router:    httpRouter,
 		Validator: validate,
 		Hasher:    hasher,
 		Mailer:    mailer,
