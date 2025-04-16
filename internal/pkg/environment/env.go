@@ -30,7 +30,7 @@ func LoadEnv(appEnv string) error {
 }
 
 func Setup() (string, error) {
-	appEnv := env.Get("ENV", "development")
+	appEnv := env.Get("SERVER_ENV", "development")
 	if appEnv != "production" {
 		if err := LoadEnv(appEnv); err != nil {
 			return "", fmt.Errorf("load env: %w", err)

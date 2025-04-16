@@ -10,7 +10,7 @@ import (
 
 func SetLogger(out io.Writer, appEnv string, level string) {
 	if level == "" {
-		level = env.Get("LOG_LEVEL", "info")
+		level = env.Get("SERVER_LOG_LEVEL", "info")
 	}
 
 	opts := &slog.HandlerOptions{
