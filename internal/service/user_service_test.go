@@ -41,7 +41,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 	)
 
 	ctrl := gomock.NewController(t)
-	mockRepo := mock.NewMockUserRepo(ctrl)
+	mockRepo := mock.NewMockUserRepository(ctrl)
 	mockHasher := secMock.NewMockHasher(ctrl)
 	mockSigner := secMock.NewMockSigner(ctrl)
 	mockMailer := mailMock.NewMockMailer(ctrl)
@@ -124,7 +124,7 @@ func TestUserService_VerifyUser(t *testing.T) {
 	)
 
 	ctrl := gomock.NewController(t)
-	mockRepo := mock.NewMockUserRepo(ctrl)
+	mockRepo := mock.NewMockUserRepository(ctrl)
 	mockHasher := secMock.NewMockHasher(ctrl)
 	mockMailer := mailMock.NewMockMailer(ctrl)
 	mockSigner := secMock.NewMockSigner(ctrl)
@@ -178,19 +178,18 @@ func TestUserService_LoginUser(t *testing.T) {
 		repoErr      error
 		hasherResult bool
 		hasherErr    error
-		wantOk       bool
+		wantToken    string
 		wantErr      error
 	}{
 		{
 			name:         "Success_ValidCredentials",
 			repoUser:     user,
 			hasherResult: true,
-			wantOk:       true,
+			wantToken:    "mocked_access_token",
 		},
 		{
 			name:    "Failure_UserNotFound",
 			repoErr: service.ErrUserNotFound,
-			wantOk:  false,
 			wantErr: service.ErrUserNotFound,
 		},
 		{
@@ -201,26 +200,23 @@ func TestUserService_LoginUser(t *testing.T) {
 				PasswordHash: hashedPass,
 			},
 			repoErr: service.ErrUserNotVerified,
-			wantOk:  false,
 			wantErr: service.ErrUserNotVerified,
 		},
 		{
 			name:         "Failure_InvalidPassword",
 			repoUser:     user,
 			hasherResult: false,
-			wantOk:       false,
+			wantErr:      service.ErrUserNotFound,
 		},
 		{
 			name:    "Failure_RepoError",
 			repoErr: errors.New("database failure"),
-			wantOk:  false,
 			wantErr: errors.New("database failure"),
 		},
 		{
 			name:      "Failure_HasherError",
 			repoUser:  user,
 			hasherErr: errors.New("hash mismatch"),
-			wantOk:    false,
 			wantErr:   errors.New("hash mismatch"),
 		},
 	}
@@ -231,8 +227,14 @@ func TestUserService_LoginUser(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockRepo := mock.NewMockUserRepo(ctrl)
+			mockRepo := mock.NewMockUserRepository(ctrl)
 			mockHasher := secMock.NewMockHasher(ctrl)
+			mockSigner := secMock.NewMockSigner(ctrl)
+
+			if tc.repoUser != nil && tc.repoErr == nil && tc.wantToken != "" {
+				mockSigner.EXPECT().Sign(tc.repoUser.ID, []string{cfg.JWT.Issuer}, 30*time.Minute).
+					Return("mocked_access_token", nil)
+			}
 
 			ctx := context.Background()
 			mockRepo.EXPECT().
@@ -241,7 +243,7 @@ func TestUserService_LoginUser(t *testing.T) {
 
 			if tc.repoErr == nil {
 				mockHasher.EXPECT().
-					Verify(testPass, hashedPass).
+					Verify(testPass, tc.repoUser.PasswordHash).
 					Return(tc.hasherResult, tc.hasherErr)
 			}
 
@@ -249,15 +251,17 @@ func TestUserService_LoginUser(t *testing.T) {
 				Repo:   mockRepo,
 				Hasher: mockHasher,
 				Cfg:    cfg,
+				Signer: mockSigner,
 			})
 
-			ok, err := svc.LoginUser(ctx, loginParams)
+			token, err := svc.LoginUser(ctx, loginParams)
 
-			assert.Equal(t, tc.wantOk, ok)
 			if tc.wantErr != nil {
 				assert.ErrorContains(t, err, tc.wantErr.Error())
+				assert.Empty(t, token)
 			} else {
 				assert.NoError(t, err)
+				assert.Equal(t, tc.wantToken, token)
 			}
 		})
 	}

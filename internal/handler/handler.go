@@ -141,13 +141,17 @@ func (r *UserLoginRequest) LogValue() slog.Value {
 	return slog.AnyValue(nil)
 }
 
+type UserLoginResponse struct {
+	AccessToken string `json:"access_token,omitempty"`
+}
+
 func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	_, req, _ := FromParamsContext[UserLoginRequest](r.Context())
 	params := service.LoginUserParams{
 		Email:    req.Email,
 		Password: req.Password,
 	}
-	ok, err := h.service.LoginUser(r.Context(), params)
+	accessToken, err := h.service.LoginUser(r.Context(), params)
 	if err != nil {
 		if errors.Is(err, service.ErrUserNotFound) || errors.Is(err, service.ErrUserNotVerified) {
 			unauthorizedResponse(w, r, err)
@@ -158,14 +162,12 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !ok {
-		unauthorizedResponse(w, r, service.ErrUserNotFound)
-		return
-	}
-
 	// TODO: move message to messages
-	res := Response[any]{
+	res := Response[*UserLoginResponse]{
 		Message: "Login successful!",
+		Data: &UserLoginResponse{
+			AccessToken: accessToken,
+		},
 	}
 
 	response.JSON(w, r, http.StatusOK, res)

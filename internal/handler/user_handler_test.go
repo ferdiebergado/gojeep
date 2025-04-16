@@ -198,7 +198,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 						Email:    testEmail,
 						Password: testPass,
 					}).
-					Return(true, nil)
+					Return("mock_access_token", nil)
 			},
 		},
 		{
@@ -238,7 +238,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 						Email:    testEmail,
 						Password: "wrongpass",
 					}).
-					Return(false, nil)
+					Return("", service.ErrUserNotFound)
 			},
 		},
 	}

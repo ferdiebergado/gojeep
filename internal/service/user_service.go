@@ -19,7 +19,7 @@ import (
 type UserService interface {
 	RegisterUser(ctx context.Context, params RegisterUserParams) (*model.User, error)
 	VerifyUser(ctx context.Context, token string) error
-	LoginUser(ctx context.Context, params LoginUserParams) (bool, error)
+	LoginUser(ctx context.Context, params LoginUserParams) (string, error)
 }
 
 type UserServiceDeps struct {
@@ -142,18 +142,33 @@ func (s *userService) VerifyUser(ctx context.Context, token string) error {
 	return s.repo.VerifyUser(ctx, userID)
 }
 
-func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (bool, error) {
+func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (string, error) {
 	user, err := s.repo.FindUserByEmail(ctx, params.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return false, ErrUserNotFound
+			return "", ErrUserNotFound
 		}
-		return false, err
+		return "", err
 	}
 
 	if !user.VerifiedAt.Valid {
-		return false, ErrUserNotVerified
+		return "", ErrUserNotVerified
 	}
 
-	return s.hasher.Verify(params.Password, user.PasswordHash)
+	ok, err := s.hasher.Verify(params.Password, user.PasswordHash)
+	if err != nil {
+		return "", err
+	}
+
+	if !ok {
+		return "", ErrUserNotFound
+	}
+
+	ttl := 30 * time.Minute
+	accessToken, err := s.signer.Sign(user.ID, []string{s.cfg.JWT.Issuer}, ttl)
+	if err != nil {
+		return "", err
+	}
+
+	return accessToken, nil
 }

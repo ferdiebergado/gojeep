@@ -43,10 +43,10 @@ func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 }
 
 // LoginUser mocks base method.
-func (m *MockUserService) LoginUser(ctx context.Context, params service.LoginUserParams) (bool, error) {
+func (m *MockUserService) LoginUser(ctx context.Context, params service.LoginUserParams) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoginUser", ctx, params)
-	ret0, _ := ret[0].(bool)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
