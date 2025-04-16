@@ -23,6 +23,24 @@ type ServerOptions struct {
 	ShutdownTimeout int `json:"shutdown_timeout,omitempty"`
 }
 
+type ServerConfig struct {
+	URL      string
+	Port     int
+	Key      string
+	Env      string
+	LogLevel string
+	Options  ServerOptions
+}
+
+func (c ServerConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("url", c.URL),
+		slog.String("env", c.Env),
+		slog.String("log_level", c.LogLevel),
+		slog.Any("options", c.Options),
+	)
+}
+
 type DBOptions struct {
 	Driver          string `json:"driver,omitempty"`
 	PingTimeout     int    `json:"ping_timeout,omitempty"`
@@ -32,45 +50,6 @@ type DBOptions struct {
 	ConnMaxLifetime int    `json:"conn_max_lifetime,omitempty"`
 }
 
-type TemplateOptions struct {
-	Path       string `json:"path,omitempty"`
-	LayoutFile string `json:"layout_file,omitempty"`
-}
-
-type JWTOptions struct {
-	JTILen uint32 `json:"jti_len,omitempty"`
-	Issuer string `json:"issuer,omitempty"`
-}
-
-type EmailOptions struct {
-	Sender    string `json:"sender,omitempty"`
-	VerifyTTL int    `json:"verify_ttl,omitempty"`
-}
-
-type Options struct {
-	Server   ServerOptions   `json:"server,omitempty"`
-	DB       DBOptions       `json:"db,omitempty"`
-	Template TemplateOptions `json:"template,omitempty"`
-	JWT      JWTOptions      `json:"jwt,omitempty"`
-	Email    EmailOptions    `json:"email,omitempty"`
-}
-
-type AppConfig struct {
-	URL      string
-	Port     int
-	Key      string
-	Env      string
-	LogLevel string
-}
-
-func (c AppConfig) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.String("url", c.URL),
-		slog.String("env", c.Env),
-		slog.String("log_level", c.LogLevel),
-	)
-}
-
 type DBConfig struct {
 	User    string
 	Pass    string
@@ -78,6 +57,7 @@ type DBConfig struct {
 	Port    int
 	SSLMode string
 	DB      string
+	Options DBOptions
 }
 
 func (c DBConfig) LogValue() slog.Value {
@@ -86,7 +66,15 @@ func (c DBConfig) LogValue() slog.Value {
 		slog.Int("port", c.Port),
 		slog.String("sslmode", c.SSLMode),
 		slog.String("db", c.DB),
+		slog.Any("options", c.Options),
 	)
+}
+
+type EmailOptions struct {
+	Sender       string `json:"sender,omitempty"`
+	VerifyTTL    int    `json:"verify_ttl,omitempty"`
+	TemplatePath string `json:"path,omitempty"`
+	LayoutFile   string `json:"layout_file,omitempty"`
 }
 
 type SMTPConfig struct {
@@ -94,29 +82,43 @@ type SMTPConfig struct {
 	Password string
 	Host     string
 	Port     int
+	Options  EmailOptions
 }
 
 func (c SMTPConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("host", c.Host),
 		slog.Int("port", c.Port),
+		slog.Any("options", c.Options),
 	)
+}
+
+type JWTOptions struct {
+	JTILen uint32 `json:"jti_len,omitempty"`
+	Issuer string `json:"issuer,omitempty"`
+}
+
+type Options struct {
+	Server ServerOptions `json:"server,omitempty"`
+	DB     DBOptions     `json:"db,omitempty"`
+	JWT    JWTOptions    `json:"jwt,omitempty"`
+	Email  EmailOptions  `json:"email,omitempty"`
 }
 
 // TODO: reduce mem usage
 type Config struct {
-	App     AppConfig
-	DB      DBConfig
-	Email   SMTPConfig
-	Options Options
+	Server ServerConfig
+	DB     DBConfig
+	Email  SMTPConfig
+	JWT    JWTOptions
 }
 
 func (c Config) LogValue() slog.Value {
 	return slog.GroupValue(
-		slog.Any("app", c.App),
-		slog.Any("db", c.DB),
-		slog.Any("email", c.Email),
-		slog.Any("options", c.Options),
+		slog.Any("app", c.Server.Options),
+		slog.Any("db", c.DB.Options),
+		slog.Any("email", c.Email.Options),
+		slog.Any("jwt", c.JWT),
 	)
 }
 
@@ -129,12 +131,13 @@ func New(cfgFile string) (*Config, error) {
 	}
 
 	cfg := &Config{
-		App: AppConfig{
+		Server: ServerConfig{
 			URL:      env.MustGet("APP_URL"),
 			Port:     env.GetInt("PORT", envDefaultAppPort),
 			Key:      env.MustGet("APP_KEY"),
 			Env:      env.Get("ENV", "development"),
 			LogLevel: env.Get("LOG_LEVEL", "INFO"),
+			Options:  opts.Server,
 		},
 		DB: DBConfig{
 			User:    env.MustGet("POSTGRES_USER"),
@@ -143,14 +146,16 @@ func New(cfgFile string) (*Config, error) {
 			Port:    env.GetInt("POSTGRES_PORT", envDefaultDBPort),
 			SSLMode: env.MustGet("POSTGRES_SSLMODE"),
 			DB:      env.MustGet("POSTGRES_DB"),
+			Options: opts.DB,
 		},
 		Email: SMTPConfig{
 			User:     env.MustGet("SMTP_USER"),
 			Password: env.MustGet("SMTP_PASS"),
 			Host:     env.MustGet("SMTP_HOST"),
 			Port:     env.GetInt("SMTP_PORT", envDefaultSMTPPort),
+			Options:  opts.Email,
 		},
-		Options: *opts,
+		JWT: opts.JWT,
 	}
 
 	slog.Debug("config loaded", slog.Any("config", cfg))

@@ -19,11 +19,9 @@ var audience = []string{aud}
 func TestJWTSignAndVerify(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
-		Options: config.Options{
-			JWT: config.JWTOptions{
-				JTILen: 32,
-				Issuer: "test",
-			},
+		JWT: config.JWTOptions{
+			JTILen: 32,
+			Issuer: "test",
 		},
 	}
 	jwtHandler := security.NewSigner(cfg)
@@ -41,11 +39,9 @@ func TestJWTSignAndVerify(t *testing.T) {
 func TestJWTVerifyInvalidToken(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
-		Options: config.Options{
-			JWT: config.JWTOptions{
-				JTILen: 32,
-				Issuer: "test",
-			},
+		JWT: config.JWTOptions{
+			JTILen: 32,
+			Issuer: "test",
 		},
 	}
 	jwtHandler := security.NewSigner(cfg)
@@ -58,11 +54,9 @@ func TestJWTVerifyInvalidToken(t *testing.T) {
 func TestJWTVerifyModifiedToken(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
-		Options: config.Options{
-			JWT: config.JWTOptions{
-				JTILen: 32,
-				Issuer: "test",
-			},
+		JWT: config.JWTOptions{
+			JTILen: 32,
+			Issuer: "test",
 		},
 	}
 	jwtHandler := security.NewSigner(cfg)
@@ -81,11 +75,9 @@ func TestJWTVerifyModifiedToken(t *testing.T) {
 func TestJWTVerifyExpiredToken(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
-		Options: config.Options{
-			JWT: config.JWTOptions{
-				JTILen: 32,
-				Issuer: "test",
-			},
+		JWT: config.JWTOptions{
+			JTILen: 32,
+			Issuer: "test",
 		},
 	}
 	jwtHandler := security.NewSigner(cfg)
@@ -103,14 +95,12 @@ func TestJWTVerifyExpiredToken(t *testing.T) {
 func TestJWTVerifyWrongSigningKey(t *testing.T) {
 	t.Parallel()
 	cfg := &config.Config{
-		App: config.AppConfig{
+		Server: config.ServerConfig{
 			Key: "hello",
 		},
-		Options: config.Options{
-			JWT: config.JWTOptions{
-				JTILen: 32,
-				Issuer: "test",
-			},
+		JWT: config.JWTOptions{
+			JTILen: 32,
+			Issuer: "test",
 		},
 	}
 	jwtHandler := security.NewSigner(cfg)
@@ -122,14 +112,12 @@ func TestJWTVerifyWrongSigningKey(t *testing.T) {
 	assert.NoError(t, err)
 
 	wrongCfg := &config.Config{
-		App: config.AppConfig{
+		Server: config.ServerConfig{
 			Key: "world",
 		},
-		Options: config.Options{
-			JWT: config.JWTOptions{
-				JTILen: 32,
-				Issuer: "test",
-			},
+		JWT: config.JWTOptions{
+			JTILen: 32,
+			Issuer: "test",
 		},
 	}
 	wrongJwtHandler := security.NewSigner(wrongCfg)

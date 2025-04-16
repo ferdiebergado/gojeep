@@ -26,9 +26,9 @@ var _ Signer = (*signer)(nil)
 func NewSigner(cfg *config.Config) Signer {
 	return &signer{
 		method: jwt.SigningMethodHS256,
-		key:    cfg.App.Key,
-		jtiLen: cfg.Options.JWT.JTILen,
-		issuer: cfg.Options.JWT.Issuer,
+		key:    cfg.Server.Key,
+		jtiLen: cfg.JWT.JTILen,
+		issuer: cfg.JWT.Issuer,
 	}
 }
 

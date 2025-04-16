@@ -33,24 +33,22 @@ type mailer struct {
 
 var _ Mailer = (*mailer)(nil)
 
-func New(cfg *config.Config) (Mailer, error) {
-	tmplCfg := cfg.Options.Template
-	path := tmplCfg.Path
-	layoutFile := filepath.Join(path, tmplCfg.LayoutFile)
+func New(cfg *config.SMTPConfig) (Mailer, error) {
+	opts := cfg.Options
+	path := opts.TemplatePath
+	layoutFile := filepath.Join(path, opts.LayoutFile)
 	layoutTmpl := template.Must(template.New("layout").ParseFiles(layoutFile))
 	tmplMap, err := parsePages(path, layoutTmpl)
 	if err != nil {
 		return nil, err
 	}
 
-	emailCfg := cfg.Email
-
 	return &mailer{
-		from:      emailCfg.User,
-		pass:      emailCfg.Password,
-		host:      emailCfg.Host,
-		port:      emailCfg.Port,
-		sender:    cfg.Options.Email.Sender,
+		from:      cfg.User,
+		pass:      cfg.Password,
+		host:      cfg.Host,
+		port:      cfg.Port,
+		sender:    opts.Sender,
 		templates: tmplMap,
 	}, nil
 }

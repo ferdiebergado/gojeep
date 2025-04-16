@@ -114,8 +114,8 @@ func (s *userService) sendVerificationEmail(user *model.User) {
 		subject = "Verify your email"
 	)
 
-	audience := s.cfg.App.URL + "/auth/verify"
-	ttl := time.Duration(s.cfg.Options.Email.VerifyTTL) * time.Second
+	audience := s.cfg.Server.URL + "/auth/verify"
+	ttl := time.Duration(s.cfg.Email.Options.VerifyTTL) * time.Second
 	token, err := s.signer.Sign(user.Email, []string{audience}, ttl)
 	if err != nil {
 		slog.Error("failed to generate token", "reason", err)

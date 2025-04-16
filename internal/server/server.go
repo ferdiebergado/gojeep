@@ -13,18 +13,20 @@ import (
 
 type Server struct {
 	http.Server
-	cfg *config.Config
+	cfg *config.ServerConfig
 }
 
-func New(cfg *config.Config, app http.Handler) *Server {
+func New(cfg *config.ServerConfig, app http.Handler) *Server {
+	port := cfg.Port
+	opts := cfg.Options
 	return &Server{
 		cfg: cfg,
 		Server: http.Server{
-			Addr:         fmt.Sprintf(":%d", cfg.App.Port),
+			Addr:         fmt.Sprintf(":%d", port),
 			Handler:      app,
-			ReadTimeout:  time.Duration(cfg.Options.Server.ReadTimeout) * time.Second,
-			WriteTimeout: time.Duration(cfg.Options.Server.WriteTimeout) * time.Second,
-			IdleTimeout:  time.Duration(cfg.Options.Server.IdleTimeout) * time.Second,
+			ReadTimeout:  time.Duration(opts.ReadTimeout) * time.Second,
+			WriteTimeout: time.Duration(opts.WriteTimeout) * time.Second,
+			IdleTimeout:  time.Duration(opts.IdleTimeout) * time.Second,
 		},
 	}
 }
@@ -32,7 +34,7 @@ func New(cfg *config.Config, app http.Handler) *Server {
 func (s *Server) Start() chan error {
 	serverErr := make(chan error, 1)
 	go func() {
-		slog.Info("Server started", "address", s.Addr, "env", s.cfg.App.Env, "log_level", s.cfg.App.LogLevel)
+		slog.Info("Server started", "address", s.Addr, "env", s.cfg.Env, "log_level", s.cfg.LogLevel)
 		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 		}
@@ -43,7 +45,7 @@ func (s *Server) Start() chan error {
 
 func (s *Server) Shutdown() error {
 	slog.Info("Shutting down server...")
-	timeout := time.Duration(s.cfg.Options.Server.ShutdownTimeout) * time.Second
+	timeout := time.Duration(s.cfg.Options.ShutdownTimeout) * time.Second
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

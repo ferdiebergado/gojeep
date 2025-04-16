@@ -61,16 +61,17 @@ func TestUserService_RegisterUser(t *testing.T) {
 	}
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		Server: config.ServerConfig{
 			URL: "http://localhost:8888",
 		},
-		Options: config.Options{
-			Email: config.EmailOptions{
+		Email: config.SMTPConfig{
+			Options: config.EmailOptions{
 				VerifyTTL: 300,
-			}},
+			},
+		},
 	}
 
-	audience := cfg.App.URL + "/auth/verify"
+	audience := cfg.Server.URL + "/auth/verify"
 	ctx := context.Background()
 	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(nil, sql.ErrNoRows)
 	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
@@ -82,7 +83,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	mockSigner.EXPECT().Sign(testEmail, []string{audience}, time.Duration(cfg.Options.Email.VerifyTTL)*time.Second).
+	mockSigner.EXPECT().Sign(testEmail, []string{audience}, time.Duration(cfg.Email.Options.VerifyTTL)*time.Second).
 		Do(func(_ string, _ []string, _ time.Duration) {
 			defer wg.Done()
 		}).Return(token, nil)
@@ -127,7 +128,7 @@ func TestUserService_VerifyUser(t *testing.T) {
 	mockSigner := secMock.NewMockSigner(ctrl)
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		Server: config.ServerConfig{
 			URL: "http://localhost:8888",
 		},
 	}
@@ -157,7 +158,7 @@ func TestUserService_LoginUser(t *testing.T) {
 		hashedPass = "hashed"
 	)
 
-	cfg := &config.Config{App: config.AppConfig{URL: "http://localhost:8888"}}
+	cfg := &config.Config{Server: config.ServerConfig{URL: "http://localhost:8888"}}
 	loginParams := service.LoginUserParams{Email: testEmail, Password: testPass}
 	user := &model.User{
 		Model:        model.Model{ID: "1"},
