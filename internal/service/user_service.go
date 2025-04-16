@@ -116,7 +116,7 @@ func (s *userService) sendVerificationEmail(user *model.User) {
 
 	audience := s.cfg.Server.URL + "/auth/verify"
 	ttl := time.Duration(s.cfg.Email.Options.VerifyTTL) * time.Second
-	token, err := s.signer.Sign(user.Email, []string{audience}, ttl)
+	token, err := s.signer.Sign(user.ID, []string{audience}, ttl)
 	if err != nil {
 		slog.Error("failed to generate token", "reason", err)
 		return
@@ -134,12 +134,12 @@ func (s *userService) sendVerificationEmail(user *model.User) {
 }
 
 func (s *userService) VerifyUser(ctx context.Context, token string) error {
-	email, err := s.signer.Verify(token)
+	userID, err := s.signer.Verify(token)
 	if err != nil {
 		return err
 	}
 
-	return s.repo.VerifyUser(ctx, email)
+	return s.repo.VerifyUser(ctx, userID)
 }
 
 func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (bool, error) {

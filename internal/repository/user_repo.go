@@ -11,7 +11,7 @@ import (
 type UserRepository interface {
 	CreateUser(ctx context.Context, params CreateUserParams) (*model.User, error)
 	FindUserByEmail(ctx context.Context, email string) (*model.User, error)
-	VerifyUser(ctx context.Context, email string) error
+	VerifyUser(ctx context.Context, userID string) error
 }
 
 type userRepo struct {
@@ -62,11 +62,11 @@ func (r *userRepo) FindUserByEmail(ctx context.Context, email string) (*model.Us
 const QueryUserVerify = `
 UPDATE users
 SET verified_at = NOW()
-WHERE email = $1
+WHERE id = $1
 `
 
-func (r *userRepo) VerifyUser(ctx context.Context, email string) error {
-	_, err := r.db.ExecContext(ctx, QueryUserVerify, email)
+func (r *userRepo) VerifyUser(ctx context.Context, userID string) error {
+	_, err := r.db.ExecContext(ctx, QueryUserVerify, userID)
 
 	if err != nil {
 		return err

@@ -200,7 +200,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 }
 
 func TestUserRepo_VerifyUser(t *testing.T) {
-	const email = "scan@abc.com"
+	const userID = "1"
 
 	db, mock, err := sqlmock.New(sqlmockOpts)
 	if err != nil {
@@ -211,9 +211,9 @@ func TestUserRepo_VerifyUser(t *testing.T) {
 	ctx := context.Background()
 	repo := repository.NewUserRepository(db)
 	mock.ExpectExec(repository.QueryUserVerify).
-		WithArgs(email).WillReturnResult(sqlmock.NewResult(1, 1))
+		WithArgs(userID).WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.VerifyUser(ctx, email)
+	err = repo.VerifyUser(ctx, userID)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

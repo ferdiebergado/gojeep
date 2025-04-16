@@ -30,6 +30,7 @@ func TestMain(m *testing.M) {
 func TestUserService_RegisterUser(t *testing.T) {
 	t.Parallel()
 	const (
+		userID         = "1"
 		testEmail      = "abc@example.com"
 		testPass       = "test"
 		testPassHashed = "hashed"
@@ -56,7 +57,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 	}
 
 	user := &model.User{
-		Model: model.Model{ID: "1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		Model: model.Model{ID: userID, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		Email: testEmail,
 	}
 
@@ -83,7 +84,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(2)
-	mockSigner.EXPECT().Sign(testEmail, []string{audience}, time.Duration(cfg.Email.Options.VerifyTTL)*time.Second).
+	mockSigner.EXPECT().Sign(userID, []string{audience}, time.Duration(cfg.Email.Options.VerifyTTL)*time.Second).
 		Do(func(_ string, _ []string, _ time.Duration) {
 			defer wg.Done()
 		}).Return(token, nil)
@@ -117,6 +118,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 func TestUserService_VerifyUser(t *testing.T) {
 	t.Parallel()
 	const (
+		id    = "1"
 		email = "test@example.com"
 		token = "token"
 	)
@@ -134,8 +136,8 @@ func TestUserService_VerifyUser(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	mockRepo.EXPECT().VerifyUser(ctx, email).Return(nil)
-	mockSigner.EXPECT().Verify(token).Return(email, nil)
+	mockRepo.EXPECT().VerifyUser(ctx, id).Return(nil)
+	mockSigner.EXPECT().Verify(token).Return(id, nil)
 
 	deps := &service.UserServiceDeps{
 		Repo:   mockRepo,
