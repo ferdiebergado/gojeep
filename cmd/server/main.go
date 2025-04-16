@@ -3,15 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/handler"
@@ -71,8 +68,8 @@ func run(ctx context.Context) error {
 	app := handler.NewApp(deps)
 	app.SetupRoutes()
 
-	server := createServer(cfg, app.Router())
-	serverErr := startServer(server, cfg)
+	server := newServer(cfg, app.Router())
+	serverErr := server.Start()
 	select {
 	case <-ctx.Done():
 		slog.Info("Shutdown signal received.")
@@ -80,7 +77,7 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("server error: %w", err)
 	}
 
-	return shutdownServer(server, cfg)
+	return server.Shutdown()
 }
 
 func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies, error) {
@@ -103,40 +100,4 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 		Signer:    signer,
 	}
 	return deps, nil
-}
-
-func createServer(cfg *config.Config, router http.Handler) *http.Server {
-	return &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.App.Port),
-		Handler:      router,
-		ReadTimeout:  time.Duration(cfg.Options.Server.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(cfg.Options.Server.WriteTimeout) * time.Second,
-		IdleTimeout:  time.Duration(cfg.Options.Server.IdleTimeout) * time.Second,
-	}
-}
-
-func startServer(server *http.Server, cfg *config.Config) chan error {
-	serverErr := make(chan error, 1)
-	go func() {
-		slog.Info("Server started", "address", server.Addr, "env", cfg.App.Env, "log_level", cfg.App.LogLevel)
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			serverErr <- err
-		}
-		close(serverErr)
-	}()
-	return serverErr
-}
-
-func shutdownServer(server *http.Server, cfg *config.Config) error {
-	slog.Info("Shutting down server...")
-	timeout := time.Duration(cfg.Options.Server.ShutdownTimeout) * time.Second
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	if err := server.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("server forced to shutdown: %w", err)
-	}
-
-	slog.Info("Server gracefully shut down.")
-	return nil
 }
