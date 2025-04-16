@@ -16,14 +16,13 @@ type Server struct {
 	cfg *config.ServerConfig
 }
 
-func New(cfg *config.ServerConfig, app http.Handler) *Server {
-	port := cfg.Port
+func New(cfg *config.ServerConfig, handler http.Handler) *Server {
 	opts := cfg.Options
 	return &Server{
 		cfg: cfg,
 		Server: http.Server{
-			Addr:         fmt.Sprintf(":%d", port),
-			Handler:      app,
+			Addr:         fmt.Sprintf(":%d", cfg.Port),
+			Handler:      handler,
 			ReadTimeout:  time.Duration(opts.ReadTimeout) * time.Second,
 			WriteTimeout: time.Duration(opts.WriteTimeout) * time.Second,
 			IdleTimeout:  time.Duration(opts.IdleTimeout) * time.Second,
@@ -33,8 +32,9 @@ func New(cfg *config.ServerConfig, app http.Handler) *Server {
 
 func (s *Server) Start() chan error {
 	serverErr := make(chan error, 1)
+	cfg := s.cfg
 	go func() {
-		slog.Info("Server started", "address", s.Addr, "env", s.cfg.Env, "log_level", s.cfg.LogLevel)
+		slog.Info("Server started", "address", s.Addr, "env", cfg.Env, "log_level", cfg.LogLevel)
 		if err := s.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 		}
