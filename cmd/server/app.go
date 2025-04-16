@@ -1,42 +1,44 @@
-package handler
+package main
 
 import (
 	"database/sql"
 
 	"github.com/ferdiebergado/goexpress"
 	"github.com/ferdiebergado/gojeep/internal/config"
+	"github.com/ferdiebergado/gojeep/internal/handler"
 	"github.com/ferdiebergado/gojeep/internal/pkg/email"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	"github.com/ferdiebergado/gojeep/internal/repository"
+	"github.com/ferdiebergado/gojeep/internal/router"
 	"github.com/ferdiebergado/gojeep/internal/service"
 	"github.com/go-playground/validator/v10"
 )
 
-type App struct {
+type app struct {
 	cfg       *config.Config
 	db        *sql.DB
-	router    Router
+	handler   router.Router
 	validater *validator.Validate
 	hasher    security.Hasher
 	mailer    email.Mailer
 	signer    security.Signer
 }
 
-type AppDependencies struct {
+type dependencies struct {
 	Config    *config.Config
 	DB        *sql.DB
-	Router    Router
+	Router    router.Router
 	Validator *validator.Validate
 	Hasher    security.Hasher
 	Mailer    email.Mailer
 	Signer    security.Signer
 }
 
-func NewApp(deps *AppDependencies) *App {
-	app := &App{
+func newApp(deps *dependencies) *app {
+	app := &app{
 		cfg:       deps.Config,
 		db:        deps.DB,
-		router:    deps.Router,
+		handler:   deps.Router,
 		validater: deps.Validator,
 		hasher:    deps.Hasher,
 		mailer:    deps.Mailer,
@@ -46,16 +48,16 @@ func NewApp(deps *AppDependencies) *App {
 	return app
 }
 
-func (a *App) Router() Router {
-	return a.router
+func (a *app) Router() router.Router {
+	return a.handler
 }
 
-func (a *App) SetupMiddlewares() {
-	a.router.Use(goexpress.RecoverFromPanic)
-	a.router.Use(goexpress.LogRequest)
+func (a *app) SetupMiddlewares() {
+	a.handler.Use(goexpress.RecoverFromPanic)
+	a.handler.Use(goexpress.LogRequest)
 }
 
-func (a *App) SetupRoutes() {
+func (a *app) SetupRoutes() {
 	repo := repository.NewRepository(a.db)
 	deps := &service.Dependencies{
 		Repo:   *repo,
@@ -66,6 +68,6 @@ func (a *App) SetupRoutes() {
 	}
 	svc := service.NewService(deps)
 
-	apiHandler := NewHandler(*svc)
-	mountAPIRoutes(a.router, apiHandler, a.validater)
+	apiHandler := handler.New(*svc)
+	handler.MountRoutes(a.handler, apiHandler, a.validater)
 }

@@ -1,4 +1,4 @@
-package handler
+package router
 
 import (
 	"net/http"
@@ -24,7 +24,7 @@ type router struct {
 
 var _ Router = (*router)(nil)
 
-func NewRouter() Router {
+func New() Router {
 	return &router{
 		handler: goexpress.New(),
 	}
@@ -39,7 +39,7 @@ func (r *router) Get(pattern string, handlerFunc http.HandlerFunc, middlewares .
 }
 
 func (r *router) Group(prefix string, grpFunc func(Router) Router, middlewares ...func(next http.Handler) http.Handler) {
-	grpHandler := grpFunc(NewRouter())
+	grpHandler := grpFunc(New())
 
 	r.handler.Handle(prefix+"/", http.StripPrefix(prefix, grpHandler), middlewares...)
 }

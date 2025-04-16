@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -11,13 +11,13 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/config"
 )
 
-type server struct {
+type Server struct {
 	http.Server
 	cfg *config.Config
 }
 
-func newServer(cfg *config.Config, app http.Handler) *server {
-	return &server{
+func New(cfg *config.Config, app http.Handler) *Server {
+	return &Server{
 		cfg: cfg,
 		Server: http.Server{
 			Addr:         fmt.Sprintf(":%d", cfg.App.Port),
@@ -29,7 +29,7 @@ func newServer(cfg *config.Config, app http.Handler) *server {
 	}
 }
 
-func (s *server) Start() chan error {
+func (s *Server) Start() chan error {
 	serverErr := make(chan error, 1)
 	go func() {
 		slog.Info("Server started", "address", s.Addr, "env", s.cfg.App.Env, "log_level", s.cfg.App.LogLevel)
@@ -41,7 +41,7 @@ func (s *server) Start() chan error {
 	return serverErr
 }
 
-func (s *server) Shutdown() error {
+func (s *Server) Shutdown() error {
 	slog.Info("Shutting down server...")
 	timeout := time.Duration(s.cfg.Options.Server.ShutdownTimeout) * time.Second
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)

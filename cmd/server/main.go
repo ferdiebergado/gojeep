@@ -18,6 +18,8 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/pkg/logging"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	"github.com/ferdiebergado/gojeep/internal/pkg/validation"
+	"github.com/ferdiebergado/gojeep/internal/router"
+	"github.com/ferdiebergado/gojeep/internal/server"
 	"github.com/go-playground/validator/v10"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -65,10 +67,10 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	app := handler.NewApp(deps)
+	app := newApp(deps)
 	app.SetupRoutes()
 
-	server := newServer(cfg, app.Router())
+	server := server.New(cfg, app.Router())
 	serverErr := server.Start()
 	select {
 	case <-ctx.Done():
@@ -80,8 +82,8 @@ func run(ctx context.Context) error {
 	return server.Shutdown()
 }
 
-func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies, error) {
-	router := handler.NewRouter()
+func setupDependencies(cfg *config.Config, db *sql.DB) (*dependencies, error) {
+	router := router.New()
 	validate = validation.New()
 	hasher := &security.Argon2Hasher{}
 	mailer, err := email.New(cfg)
@@ -90,7 +92,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*handler.AppDependencies
 	}
 	signer := security.NewSigner(cfg)
 
-	deps := &handler.AppDependencies{
+	deps := &dependencies{
 		Config:    cfg,
 		DB:        db,
 		Router:    router,

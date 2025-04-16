@@ -27,7 +27,7 @@ type Handler struct {
 	User UserHandler
 }
 
-func NewHandler(svc service.Service) *Handler {
+func New(svc service.Service) *Handler {
 	return &Handler{
 		Base: *NewBaseHandler(svc.Base),
 		User: *NewUserHandler(svc.User),
