@@ -132,11 +132,11 @@ func New(cfgFile string) (*Config, error) {
 
 	cfg := &Config{
 		Server: ServerConfig{
-			URL:      env.MustGet("APP_URL"),
-			Port:     env.GetInt("PORT", envDefaultAppPort),
-			Key:      env.MustGet("APP_KEY"),
-			Env:      env.Get("ENV", "development"),
-			LogLevel: env.Get("LOG_LEVEL", "INFO"),
+			URL:      env.MustGet("SERVER_URL"),
+			Port:     env.GetInt("SERVER_PORT", envDefaultAppPort),
+			Key:      env.MustGet("SERVER_KEY"),
+			Env:      env.Get("SERVER_ENV", "development"),
+			LogLevel: env.Get("SERVER_LOG_LEVEL", "INFO"),
 			Options:  opts.Server,
 		},
 		DB: DBConfig{

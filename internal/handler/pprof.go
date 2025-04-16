@@ -8,7 +8,7 @@ import (
 )
 
 func StartPProf() {
-	if os.Getenv("PPROF") != "true" {
+	if os.Getenv("SERVER_ENABLE_PPROF") != "true" {
 		return
 	}
 
