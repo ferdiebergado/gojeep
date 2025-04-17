@@ -26,7 +26,7 @@ func invalidInputResponse(w http.ResponseWriter, r *http.Request, err error) {
 		Errors:  errs,
 	}
 
-	response.JSON(w, r, http.StatusBadRequest, res)
+	response.JSON(w, http.StatusBadRequest, res)
 }
 
 func validationMessage(e validator.FieldError) string {

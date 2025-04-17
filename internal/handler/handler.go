@@ -52,7 +52,7 @@ func (h *BaseHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 		slog.Error("failed to connect to the database", "reason", err)
 	}
 
-	response.JSON(w, r, status, Response[any]{Message: msg})
+	response.JSON(w, status, Response[any]{Message: msg})
 }
 
 type UserHandler struct {
@@ -94,7 +94,7 @@ func (h *UserHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request)
 			unprocessableResponse(w, r, err)
 			return
 		}
-		response.ServerError(w, r, err)
+		response.ServerError(w, err)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h *UserHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request)
 		},
 	}
 
-	response.JSON(w, r, http.StatusCreated, res)
+	response.JSON(w, http.StatusCreated, res)
 }
 
 func (h *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +128,7 @@ func (h *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	res := Response[any]{
 		Message: "Verification successful!",
 	}
-	response.JSON(w, r, http.StatusOK, res)
+	response.JSON(w, http.StatusOK, res)
 }
 
 type UserLoginRequest struct {
@@ -157,7 +157,7 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response.ServerError(w, r, err)
+		response.ServerError(w, err)
 		return
 	}
 
@@ -169,5 +169,5 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	response.JSON(w, r, http.StatusOK, res)
+	response.JSON(w, http.StatusOK, res)
 }

@@ -25,5 +25,5 @@ func errorResponse(w http.ResponseWriter, r *http.Request, status int, err error
 	res := Response[any]{
 		Message: msg,
 	}
-	response.JSON(w, r, status, res)
+	response.JSON(w, status, res)
 }
