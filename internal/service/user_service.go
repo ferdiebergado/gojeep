@@ -42,6 +42,7 @@ var _ UserService = (*userService)(nil)
 var (
 	ErrUserNotFound    = errors.New("invalid email or password")
 	ErrUserNotVerified = errors.New("email not verified")
+	ErrUserExists      = errors.New("user already exists")
 )
 
 func NewUserService(deps *UserServiceDeps) UserService {
@@ -72,14 +73,6 @@ func (p *LoginUserParams) LogValue() slog.Value {
 	return slog.AnyValue(nil)
 }
 
-type DuplicateUserError struct {
-	Email string
-}
-
-func (d *DuplicateUserError) Error() string {
-	return fmt.Sprintf("user with email %s already exists", d.Email)
-}
-
 func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParams) (*model.User, error) {
 	email := params.Email
 	existing, err := s.repo.FindUserByEmail(ctx, email)
@@ -88,7 +81,7 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 	}
 
 	if existing != nil {
-		return nil, &DuplicateUserError{Email: email}
+		return nil, ErrUserExists
 	}
 
 	hash, err := s.hasher.Hash(params.Password)
