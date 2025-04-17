@@ -164,7 +164,7 @@ func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (st
 		return "", ErrUserNotFound
 	}
 
-	ttl := 30 * time.Minute
+	ttl := time.Duration(s.cfg.JWT.Duration) * time.Minute
 	accessToken, err := s.signer.Sign(user.ID, []string{s.cfg.JWT.Issuer}, ttl)
 	if err != nil {
 		return "", err

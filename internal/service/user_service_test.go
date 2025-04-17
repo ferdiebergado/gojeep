@@ -160,7 +160,7 @@ func TestUserService_LoginUser(t *testing.T) {
 		hashedPass = "hashed"
 	)
 
-	cfg := &config.Config{Server: config.ServerConfig{URL: "http://localhost:8888"}}
+	cfg := &config.Config{Server: config.ServerConfig{URL: "http://localhost:8888"}, JWT: config.JWTOptions{Duration: 30}}
 	loginParams := service.LoginUserParams{Email: testEmail, Password: testPass}
 	user := &model.User{
 		Model:        model.Model{ID: "1"},

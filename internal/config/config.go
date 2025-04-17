@@ -94,8 +94,9 @@ func (c SMTPConfig) LogValue() slog.Value {
 }
 
 type JWTOptions struct {
-	JTILen uint32 `json:"jti_len,omitempty"`
-	Issuer string `json:"issuer,omitempty"`
+	JTILen   uint32 `json:"jti_len,omitempty"`
+	Issuer   string `json:"issuer,omitempty"`
+	Duration int    `json:"duration,omitempty"`
 }
 
 type Options struct {
