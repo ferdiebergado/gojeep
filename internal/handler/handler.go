@@ -91,7 +91,7 @@ func (h *UserHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request)
 	user, err := h.service.RegisterUser(r.Context(), params)
 	if err != nil {
 		if errors.Is(err, service.ErrUserExists) {
-			unprocessableResponse(w, r, err)
+			unprocessableResponse(w, err)
 			return
 		}
 		response.ServerError(w, err)
@@ -116,12 +116,12 @@ func (h *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 
 	if token == "" {
-		badRequestResponse(w, r, errTokenInvalid)
+		badRequestResponse(w, errTokenInvalid)
 		return
 	}
 
 	if err := h.service.VerifyUser(r.Context(), token); err != nil {
-		badRequestResponse(w, r, errTokenInvalid)
+		badRequestResponse(w, errTokenInvalid)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	accessToken, err := h.service.LoginUser(r.Context(), params)
 	if err != nil {
 		if errors.Is(err, service.ErrUserNotFound) || errors.Is(err, service.ErrUserNotVerified) {
-			unauthorizedResponse(w, r, err)
+			unauthorizedResponse(w, err)
 			return
 		}
 

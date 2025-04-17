@@ -1,27 +1,26 @@
 package handler
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/ferdiebergado/gopherkit/http/response"
 )
 
-func badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
-	errorResponse(w, r, http.StatusBadRequest, err, "Invalid input.")
+func badRequestResponse(w http.ResponseWriter, err error) {
+	errorResponse(w, http.StatusBadRequest, err, "Invalid input.")
 }
 
-func unprocessableResponse(w http.ResponseWriter, r *http.Request, err error) {
-	errorResponse(w, r, http.StatusUnprocessableEntity, err, err.Error())
+func unprocessableResponse(w http.ResponseWriter, err error) {
+	errorResponse(w, http.StatusUnprocessableEntity, err, err.Error())
 }
 
-func unauthorizedResponse(w http.ResponseWriter, r *http.Request, err error) {
-	errorResponse(w, r, http.StatusUnauthorized, err, err.Error())
+func unauthorizedResponse(w http.ResponseWriter, err error) {
+	errorResponse(w, http.StatusUnauthorized, err, err.Error())
 }
 
-func errorResponse(w http.ResponseWriter, r *http.Request, status int, err error, msg string) {
-	slog.Error("client error", "reason", err, "request", fmt.Sprint(r))
+func errorResponse(w http.ResponseWriter, status int, err error, msg string) {
+	slog.Error("client error", "reason", err)
 	res := Response[any]{
 		Message: msg,
 	}

@@ -13,7 +13,7 @@ func invalidInputResponse(w http.ResponseWriter, r *http.Request, err error) {
 	errs := make(map[string]string, 0)
 	valErrs, ok := err.(validator.ValidationErrors)
 	if !ok {
-		badRequestResponse(w, r, fmt.Errorf("type assert: %w", errors.New("error is not a validator.ValidationErrors type")))
+		badRequestResponse(w, fmt.Errorf("type assert: %w", errors.New("error is not a validator.ValidationErrors type")))
 		return
 	}
 

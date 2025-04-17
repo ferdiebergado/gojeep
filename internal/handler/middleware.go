@@ -16,7 +16,7 @@ func DecodeJSON[T any]() func(next http.Handler) http.Handler {
 			contentType := r.Header.Get(HeaderContentType)
 
 			if contentType != MimeJSON {
-				badRequestResponse(w, r, fmt.Errorf("Invalid content-type: %s", contentType))
+				badRequestResponse(w, fmt.Errorf("Invalid content-type: %s", contentType))
 				return
 			}
 
@@ -25,7 +25,7 @@ func DecodeJSON[T any]() func(next http.Handler) http.Handler {
 			decoder := json.NewDecoder(r.Body)
 			decoder.DisallowUnknownFields()
 			if err := decoder.Decode(&decoded); err != nil {
-				badRequestResponse(w, r, err)
+				badRequestResponse(w, err)
 				return
 			}
 			ctx := NewParamsContext(r.Context(), decoded)
@@ -43,7 +43,7 @@ func ValidateInput[T any](validate *validator.Validate) func(next http.Handler) 
 
 			if !ok {
 				var t T
-				badRequestResponse(w, r, fmt.Errorf("cannot type assert context value %v to %T", ctxVal, t))
+				badRequestResponse(w, fmt.Errorf("cannot type assert context value %v to %T", ctxVal, t))
 				return
 			}
 
