@@ -158,10 +158,5 @@ func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (st
 	}
 
 	ttl := time.Duration(s.cfg.JWT.Duration) * time.Minute
-	accessToken, err := s.signer.Sign(user.ID, []string{s.cfg.JWT.Issuer}, ttl)
-	if err != nil {
-		return "", err
-	}
-
-	return accessToken, nil
+	return s.signer.Sign(user.ID, []string{s.cfg.JWT.Issuer}, ttl)
 }
