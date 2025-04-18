@@ -144,7 +144,7 @@ func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (st
 		return "", err
 	}
 
-	if !user.VerifiedAt.Valid {
+	if user.VerifiedAt == nil {
 		return "", ErrUserNotVerified
 	}
 

@@ -1,12 +1,12 @@
 package model
 
 import (
-	"database/sql"
+	"time"
 )
 
 type User struct {
 	Model
 	Email        string
 	PasswordHash string
-	VerifiedAt   sql.NullTime
+	VerifiedAt   *time.Time
 }

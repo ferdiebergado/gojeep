@@ -162,14 +162,12 @@ func TestUserService_LoginUser(t *testing.T) {
 
 	cfg := &config.Config{Server: config.ServerConfig{URL: "http://localhost:8888"}, JWT: config.JWTOptions{Duration: 30}}
 	loginParams := service.LoginUserParams{Email: testEmail, Password: testPass}
+	verifiedAt := time.Date(2024, 1, 1, 1, 1, 1, 1, time.UTC)
 	user := &model.User{
 		Model:        model.Model{ID: "1"},
 		Email:        testEmail,
 		PasswordHash: hashedPass,
-		VerifiedAt: sql.NullTime{
-			Time:  time.Date(2024, 1, 1, 1, 1, 1, 1, time.UTC),
-			Valid: true,
-		},
+		VerifiedAt:   &verifiedAt,
 	}
 
 	testCases := []struct {
