@@ -51,7 +51,7 @@ func run(ctx context.Context) error {
 
 	handler.StartPProf()
 
-	cfg, err := config.New(*cfgFile)
+	cfg, err := config.Load(*cfgFile)
 	if err != nil {
 		return err
 	}

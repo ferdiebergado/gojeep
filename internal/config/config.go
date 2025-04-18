@@ -123,9 +123,9 @@ func (c Config) LogValue() slog.Value {
 	)
 }
 
-func New(cfgFile string) (*Config, error) {
+func Load(cfgFile string) (*Config, error) {
 	slog.Info("Loading config...", "path", cfgFile)
-	opts, err := loadCfgFile(cfgFile)
+	opts, err := parseCfgFile(cfgFile)
 
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func New(cfgFile string) (*Config, error) {
 	return cfg, nil
 }
 
-func loadCfgFile(cfgFile string) (*Options, error) {
+func parseCfgFile(cfgFile string) (*Options, error) {
 	cfgFile = filepath.Clean(cfgFile)
 	configFile, err := os.ReadFile(cfgFile)
 	if err != nil {
