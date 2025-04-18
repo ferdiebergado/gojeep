@@ -48,7 +48,7 @@ func ValidateInput[T any](validate *validator.Validate) func(next http.Handler) 
 			}
 
 			if err := validate.Struct(params); err != nil {
-				invalidInputResponse(w, r, err)
+				invalidInputResponse(w, err)
 				return
 			}
 
