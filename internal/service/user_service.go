@@ -40,9 +40,10 @@ type userService struct {
 
 var _ UserService = (*userService)(nil)
 var (
-	ErrUserNotFound    = errors.New("invalid email or password")
+	ErrUserNotFound    = errors.New("user not found")
 	ErrUserNotVerified = errors.New("email not verified")
 	ErrUserExists      = errors.New("user already exists")
+	ErrInvalidToken    = errors.New("invalid token")
 )
 
 func NewUserService(deps *UserServiceDeps) UserService {
@@ -129,7 +130,7 @@ func (s *userService) sendVerificationEmail(user *model.User) {
 func (s *userService) VerifyUser(ctx context.Context, token string) error {
 	userID, err := s.signer.Verify(token)
 	if err != nil {
-		return err
+		return ErrInvalidToken
 	}
 
 	return s.repo.VerifyUser(ctx, userID)
