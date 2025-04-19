@@ -32,8 +32,8 @@ func NewSigner(cfg *config.Config) Signer {
 	}
 }
 
-func (j *signer) Sign(subject string, audience []string, duration time.Duration) (string, error) {
-	id, err := GenerateRandomBytesEncoded(j.jtiLen)
+func (s *signer) Sign(subject string, audience []string, duration time.Duration) (string, error) {
+	id, err := GenerateRandomBytesEncoded(s.jtiLen)
 	if err != nil {
 		return "", err
 	}
@@ -44,20 +44,20 @@ func (j *signer) Sign(subject string, audience []string, duration time.Duration)
 		ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
 		IssuedAt:  jwt.NewNumericDate(now),
 		NotBefore: jwt.NewNumericDate(now),
-		Issuer:    j.issuer,
+		Issuer:    s.issuer,
 		Subject:   subject,
 		ID:        id,
 		Audience:  audience,
 	}
 
-	token := jwt.NewWithClaims(j.method, claims)
-	return token.SignedString([]byte(j.key))
+	token := jwt.NewWithClaims(s.method, claims)
+	return token.SignedString([]byte(s.key))
 }
 
-func (j *signer) Verify(tokenString string) (string, error) {
+func (s *signer) Verify(tokenString string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(_ *jwt.Token) (any, error) {
-		return []byte(j.key), nil
-	}, jwt.WithValidMethods([]string{j.method.Alg()}))
+		return []byte(s.key), nil
+	}, jwt.WithValidMethods([]string{s.method.Alg()}))
 	if err != nil {
 		return "", err
 	}
