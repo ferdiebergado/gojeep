@@ -35,7 +35,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 		testPass       = "test"
 		testPassHashed = "hashed"
 		token          = "testtoken"
-		title          = "Email verification" // TODO: move strings to message package
+		title          = "Email verification"
 		subject        = "Verify your email"
 		tmpl           = "verification"
 	)
