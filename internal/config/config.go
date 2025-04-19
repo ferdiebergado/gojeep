@@ -116,9 +116,9 @@ type Config struct {
 
 func (c Config) LogValue() slog.Value {
 	return slog.GroupValue(
-		slog.Any("app", c.Server.Options),
-		slog.Any("db", c.DB.Options),
-		slog.Any("email", c.Email.Options),
+		slog.Any("server", c.Server),
+		slog.Any("db", c.DB),
+		slog.Any("email", c.Email),
 		slog.Any("jwt", c.JWT),
 	)
 }
