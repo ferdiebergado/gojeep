@@ -56,7 +56,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	dbConn, err := db.Connect(ctx, &cfg.DB)
+	dbConn, err := db.Connect(ctx, cfg.DB)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func run(ctx context.Context) error {
 	app := newApp(deps)
 	app.SetupRoutes()
 
-	apiServer := server.New(&cfg.Server, app.Router())
+	apiServer := server.New(cfg.Server, app.Router())
 	apiServerErr := apiServer.Start()
 	select {
 	case <-ctx.Done():
@@ -86,7 +86,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*dependencies, error) {
 	httpRouter := router.New()
 	validate = validation.New()
 	hasher := &security.Argon2Hasher{}
-	mailer, err := email.New(&cfg.Email)
+	mailer, err := email.New(cfg.Email)
 	if err != nil {
 		return nil, err
 	}

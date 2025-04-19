@@ -29,10 +29,10 @@ type ServerConfig struct {
 	Key      string
 	Env      string
 	LogLevel string
-	Options  ServerOptions
+	Options  *ServerOptions
 }
 
-func (c ServerConfig) LogValue() slog.Value {
+func (c *ServerConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("url", c.URL),
 		slog.String("env", c.Env),
@@ -57,10 +57,10 @@ type DBConfig struct {
 	Port    int
 	SSLMode string
 	DB      string
-	Options DBOptions
+	Options *DBOptions
 }
 
-func (c DBConfig) LogValue() slog.Value {
+func (c *DBConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("host", c.Host),
 		slog.Int("port", c.Port),
@@ -82,10 +82,10 @@ type SMTPConfig struct {
 	Password string
 	Host     string
 	Port     int
-	Options  EmailOptions
+	Options  *EmailOptions
 }
 
-func (c SMTPConfig) LogValue() slog.Value {
+func (c *SMTPConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("host", c.Host),
 		slog.Int("port", c.Port),
@@ -100,21 +100,20 @@ type JWTOptions struct {
 }
 
 type Options struct {
-	Server ServerOptions `json:"server,omitempty"`
-	DB     DBOptions     `json:"db,omitempty"`
-	JWT    JWTOptions    `json:"jwt,omitempty"`
-	Email  EmailOptions  `json:"email,omitempty"`
+	Server *ServerOptions `json:"server,omitempty"`
+	DB     *DBOptions     `json:"db,omitempty"`
+	JWT    *JWTOptions    `json:"jwt,omitempty"`
+	Email  *EmailOptions  `json:"email,omitempty"`
 }
 
-// TODO: reduce mem usage
 type Config struct {
-	Server ServerConfig
-	DB     DBConfig
-	Email  SMTPConfig
-	JWT    JWTOptions
+	Server *ServerConfig
+	DB     *DBConfig
+	Email  *SMTPConfig
+	JWT    *JWTOptions
 }
 
-func (c Config) LogValue() slog.Value {
+func (c *Config) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Any("server", c.Server),
 		slog.Any("db", c.DB),
@@ -132,7 +131,7 @@ func Load(cfgFile string) (*Config, error) {
 	}
 
 	cfg := &Config{
-		Server: ServerConfig{
+		Server: &ServerConfig{
 			URL:      env.MustGet("SERVER_URL"),
 			Port:     env.GetInt("SERVER_PORT", envDefaultAppPort),
 			Key:      env.MustGet("SERVER_KEY"),
@@ -140,7 +139,7 @@ func Load(cfgFile string) (*Config, error) {
 			LogLevel: env.Get("SERVER_LOG_LEVEL", "INFO"),
 			Options:  opts.Server,
 		},
-		DB: DBConfig{
+		DB: &DBConfig{
 			User:    env.MustGet("POSTGRES_USER"),
 			Pass:    env.MustGet("POSTGRES_PASSWORD"),
 			Host:    env.MustGet("POSTGRES_HOST"),
@@ -149,7 +148,7 @@ func Load(cfgFile string) (*Config, error) {
 			DB:      env.MustGet("POSTGRES_DB"),
 			Options: opts.DB,
 		},
-		Email: SMTPConfig{
+		Email: &SMTPConfig{
 			User:     env.MustGet("SMTP_USER"),
 			Password: env.MustGet("SMTP_PASS"),
 			Host:     env.MustGet("SMTP_HOST"),

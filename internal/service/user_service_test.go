@@ -62,11 +62,11 @@ func TestUserService_RegisterUser(t *testing.T) {
 	}
 
 	cfg := &config.Config{
-		Server: config.ServerConfig{
+		Server: &config.ServerConfig{
 			URL: "http://localhost:8888",
 		},
-		Email: config.SMTPConfig{
-			Options: config.EmailOptions{
+		Email: &config.SMTPConfig{
+			Options: &config.EmailOptions{
 				VerifyTTL: 300,
 			},
 		},
@@ -130,7 +130,7 @@ func TestUserService_VerifyUser(t *testing.T) {
 	mockSigner := secMock.NewMockSigner(ctrl)
 
 	cfg := &config.Config{
-		Server: config.ServerConfig{
+		Server: &config.ServerConfig{
 			URL: "http://localhost:8888",
 		},
 	}
@@ -160,7 +160,10 @@ func TestUserService_LoginUser(t *testing.T) {
 		hashedPass = "hashed"
 	)
 
-	cfg := &config.Config{Server: config.ServerConfig{URL: "http://localhost:8888"}, JWT: config.JWTOptions{Duration: 30}}
+	cfg := &config.Config{
+		Server: &config.ServerConfig{URL: "http://localhost:8888"},
+		JWT:    &config.JWTOptions{Duration: 30},
+	}
 	loginParams := service.LoginUserParams{Email: testEmail, Password: testPass}
 	verifiedAt := time.Date(2024, 1, 1, 1, 1, 1, 1, time.UTC)
 	user := &model.User{
