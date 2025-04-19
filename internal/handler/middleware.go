@@ -28,6 +28,9 @@ func DecodeJSON[T any]() func(next http.Handler) http.Handler {
 				badRequestResponse(w, err)
 				return
 			}
+
+			slog.Info("Payload decoded", slog.Any("payload", &decoded))
+
 			ctx := NewParamsContext(r.Context(), decoded)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)

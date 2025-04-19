@@ -14,6 +14,7 @@ import (
 const (
 	HeaderContentType = "Content-Type"
 	MimeJSON          = "application/json"
+	maskChar          = "*"
 )
 
 type Response[T any] struct {
@@ -72,7 +73,11 @@ type RegisterUserRequest struct {
 }
 
 func (r *RegisterUserRequest) LogValue() slog.Value {
-	return slog.AnyValue(nil)
+	return slog.GroupValue(
+		slog.String("email", maskChar),
+		slog.String("password", maskChar),
+		slog.String("password_confirm", maskChar),
+	)
 }
 
 type RegisterUserResponse struct {
@@ -137,7 +142,10 @@ type UserLoginRequest struct {
 }
 
 func (r *UserLoginRequest) LogValue() slog.Value {
-	return slog.AnyValue(nil)
+	return slog.GroupValue(
+		slog.String("email", maskChar),
+		slog.String("password", maskChar),
+	)
 }
 
 type UserLoginResponse struct {
