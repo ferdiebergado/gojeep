@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/ferdiebergado/gojeep/internal/pkg/message"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -16,7 +17,7 @@ func DecodeJSON[T any]() func(next http.Handler) http.Handler {
 			contentType := r.Header.Get(HeaderContentType)
 
 			if contentType != MimeJSON {
-				badRequestResponse(w, fmt.Errorf("Invalid content-type: %s", contentType))
+				badRequestResponse(w, fmt.Errorf("Invalid content-type: %s", contentType), message.UserInputInvalid)
 				return
 			}
 
@@ -25,7 +26,7 @@ func DecodeJSON[T any]() func(next http.Handler) http.Handler {
 			decoder := json.NewDecoder(r.Body)
 			decoder.DisallowUnknownFields()
 			if err := decoder.Decode(&decoded); err != nil {
-				badRequestResponse(w, err)
+				badRequestResponse(w, err, message.UserInputInvalid)
 				return
 			}
 
@@ -46,7 +47,7 @@ func ValidateInput[T any](validate *validator.Validate) func(next http.Handler) 
 
 			if !ok {
 				var t T
-				badRequestResponse(w, fmt.Errorf("cannot type assert context value %v to %T", ctxVal, t))
+				badRequestResponse(w, fmt.Errorf("cannot type assert context value %v to %T", ctxVal, t), message.UserInputInvalid)
 				return
 			}
 

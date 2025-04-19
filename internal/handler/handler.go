@@ -96,7 +96,7 @@ func (h *UserHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request)
 	user, err := h.service.RegisterUser(r.Context(), params)
 	if err != nil {
 		if errors.Is(err, service.ErrUserExists) {
-			unprocessableResponse(w, err)
+			unprocessableResponse(w, err, message.UserExists)
 			return
 		}
 		response.ServerError(w, err)
@@ -104,7 +104,7 @@ func (h *UserHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request)
 	}
 
 	res := Response[*RegisterUserResponse]{
-		Message: message.Get("regSuccess"),
+		Message: message.UserRegSuccess,
 		Data: &RegisterUserResponse{
 			ID:        user.ID,
 			Email:     user.Email,
@@ -117,21 +117,24 @@ func (h *UserHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *UserHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
-	var errTokenInvalid = errors.New("invalid token")
 	token := r.URL.Query().Get("token")
 
 	if token == "" {
-		badRequestResponse(w, errTokenInvalid)
+		badRequestResponse(w, service.ErrInvalidToken, message.TokenInvalid)
 		return
 	}
 
 	if err := h.service.VerifyUser(r.Context(), token); err != nil {
-		badRequestResponse(w, errTokenInvalid)
+		if errors.Is(err, service.ErrInvalidToken) {
+			badRequestResponse(w, service.ErrInvalidToken, message.TokenInvalid)
+			return
+		}
+		response.ServerError(w, err)
 		return
 	}
 
 	res := Response[any]{
-		Message: "Verification successful!",
+		Message: message.UserVerifySuccess,
 	}
 	response.JSON(w, http.StatusOK, res)
 }
@@ -160,8 +163,13 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	accessToken, err := h.service.LoginUser(r.Context(), params)
 	if err != nil {
-		if errors.Is(err, service.ErrUserNotFound) || errors.Is(err, service.ErrUserNotVerified) {
-			unauthorizedResponse(w, err)
+		if errors.Is(err, service.ErrUserNotFound) {
+			unauthorizedResponse(w, err, message.UserNotFound)
+			return
+		}
+
+		if errors.Is(err, service.ErrUserNotVerified) {
+			unauthorizedResponse(w, err, message.UserUnverified)
 			return
 		}
 
@@ -169,9 +177,8 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: move message to messages
 	res := Response[*UserLoginResponse]{
-		Message: "Login successful!",
+		Message: message.UserLoginSuccess,
 		Data: &UserLoginResponse{
 			AccessToken: accessToken,
 		},

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ferdiebergado/gojeep/internal/pkg/message"
 	"github.com/ferdiebergado/gopherkit/http/response"
 	"github.com/go-playground/validator/v10"
 )
@@ -13,7 +14,7 @@ func invalidInputResponse(w http.ResponseWriter, err error) {
 	errs := make(map[string]string, 0)
 	valErrs, ok := err.(validator.ValidationErrors)
 	if !ok {
-		badRequestResponse(w, fmt.Errorf("type assert: %w", errors.New("error is not a validator.ValidationErrors type")))
+		badRequestResponse(w, fmt.Errorf("type assert: %w", errors.New("error is not a validator.ValidationErrors type")), message.UserInputInvalid)
 		return
 	}
 
