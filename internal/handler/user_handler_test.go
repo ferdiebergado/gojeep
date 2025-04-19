@@ -69,7 +69,7 @@ func TestUserHandler_HandleUserRegister(t *testing.T) {
 					Return(user, nil)
 			},
 			expectedStatus: http.StatusCreated,
-			expectedMsg:    message.Get("regSuccess"),
+			expectedMsg:    message.UserRegSuccess,
 			verifyResponse: func(t *testing.T, res handler.Response[handler.RegisterUserResponse]) {
 				t.Helper()
 				assert.Equal(t, user.ID, res.Data.ID)
@@ -88,7 +88,7 @@ func TestUserHandler_HandleUserRegister(t *testing.T) {
 				mockService.EXPECT().RegisterUser(gomock.Any(), gomock.Any()).Times(0)
 			},
 			expectedStatus: http.StatusBadRequest,
-			expectedMsg:    message.Get("invalidInput"),
+			expectedMsg:    message.UserInputInvalid,
 		},
 		{
 			name: "Invalid input - invalid email",
@@ -101,7 +101,7 @@ func TestUserHandler_HandleUserRegister(t *testing.T) {
 				mockService.EXPECT().RegisterUser(gomock.Any(), gomock.Any()).Times(0)
 			},
 			expectedStatus: http.StatusBadRequest,
-			expectedMsg:    message.Get("invalidInput"),
+			expectedMsg:    message.UserInputInvalid,
 		},
 		{
 			name: "Duplicate user",
@@ -119,7 +119,7 @@ func TestUserHandler_HandleUserRegister(t *testing.T) {
 					Return(nil, service.ErrUserExists)
 			},
 			expectedStatus: http.StatusUnprocessableEntity,
-			expectedMsg:    service.ErrUserExists.Error(),
+			expectedMsg:    message.UserExists,
 		},
 	}
 
@@ -191,7 +191,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 			email:           testEmail,
 			password:        testPass,
 			expectedStatus:  http.StatusOK,
-			expectedMessage: "Login successful!",
+			expectedMessage: message.UserLoginSuccess,
 			mockServiceCall: func(mockService *mock.MockUserService) {
 				mockService.EXPECT().
 					LoginUser(gomock.Any(), service.LoginUserParams{
@@ -206,7 +206,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 			email:           "notanemail",
 			password:        testPass,
 			expectedStatus:  http.StatusBadRequest,
-			expectedMessage: "Invalid input.",
+			expectedMessage: message.UserInputInvalid,
 			mockServiceCall: func(mockService *mock.MockUserService) {
 			},
 		},
@@ -214,7 +214,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 			name:            "Blank email",
 			password:        testPass,
 			expectedStatus:  http.StatusBadRequest,
-			expectedMessage: "Invalid input.",
+			expectedMessage: message.UserInputInvalid,
 			mockServiceCall: func(mockService *mock.MockUserService) {
 			},
 		},
@@ -222,7 +222,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 			name:            "Blank password",
 			email:           testEmail,
 			expectedStatus:  http.StatusBadRequest,
-			expectedMessage: "Invalid input.",
+			expectedMessage: message.UserInputInvalid,
 			mockServiceCall: func(mockService *mock.MockUserService) {
 			},
 		},
@@ -231,7 +231,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 			email:           testEmail,
 			password:        "wrongpass",
 			expectedStatus:  http.StatusUnauthorized,
-			expectedMessage: "invalid email or password",
+			expectedMessage: message.UserNotFound,
 			mockServiceCall: func(mockService *mock.MockUserService) {
 				mockService.EXPECT().
 					LoginUser(gomock.Any(), service.LoginUserParams{

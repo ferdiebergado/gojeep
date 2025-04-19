@@ -39,7 +39,7 @@ func TestHandlerHandleHealth(t *testing.T) {
 
 	var apiRes handler.Response[any]
 	if err := json.Unmarshal(rr.Body.Bytes(), &apiRes); err != nil {
-		t.Fatal(message.Get("jsonFailed"), err)
+		t.Fatal(message.JSONDecodeFailure, err)
 	}
 
 	assert.Equal(t, msg, apiRes.Message)

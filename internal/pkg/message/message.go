@@ -1,15 +1,13 @@
 package message
 
-var messages = map[string]string{
-	"regSuccess":   "Thank you for registering. Please check your email for the verification link.",
-	"jsonfailed":   "failed to decode json",
-	"invalidInput": "Invalid input.",
-}
-
-func Get(key string) string {
-	msg, ok := messages[key]
-	if !ok {
-		return "Message not found"
-	}
-	return msg
-}
+const (
+	JSONDecodeFailure = "failed to decode json"
+	TokenInvalid      = "Invalid token."
+	UserExists        = "A user with this email already exists."
+	UserInputInvalid  = "Invalid input."
+	UserLoginSuccess  = "Login successful!"
+	UserNotFound      = "Invalid username or password."
+	UserRegSuccess    = "Thank you for registering. Please check your email for the verification link."
+	UserUnverified    = "Please verify your email."
+	UserVerifySuccess = "Verification successful!"
+)
