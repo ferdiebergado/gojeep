@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
@@ -56,39 +57,71 @@ func (h *Argon2Hasher) Verify(plain string, hashed string) (bool, error) {
 		return false, errors.New("invalid hash format")
 	}
 
-	// Extract parameters and the salt/hash values
-	var memory uint32
-	var iterations uint32
-	var parallelism uint8
-	_, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &iterations, &parallelism)
+	memory, time, threads, err := parseParams(parts[3])
 	if err != nil {
-		return false, fmt.Errorf("failed to parse hash parameters: %w", err)
+		return false, err
 	}
 
 	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {
-		return false, fmt.Errorf("failed to decode salt: %w", err)
+		return false, fmt.Errorf("base64 decode salt: %w", err)
 	}
 
-	expectedHash, err := base64.RawStdEncoding.DecodeString(parts[5])
+	actualHash, err := base64.RawStdEncoding.DecodeString(parts[5])
 	if err != nil {
-		return false, fmt.Errorf("failed to decode hash: %w", err)
+		return false, fmt.Errorf("base64 decode hash: %w", err)
 	}
 
-	// Check if len(expectedHash) can safely fit in a uint32
-	hashLen := len(expectedHash)
-
-	if hashLen > int(^uint32(0)) { // ^uint32(0) gives the max value of uint32
-		return false, errors.New("expected hash length exceeds uint32 limits")
+	hashLen := len(actualHash)
+	if hashLen > int(^uint32(0)) {
+		return false, errors.New("hash length exceeds uint32")
 	}
 
-	// Compute the hash with the same parameters
-	computedHash := argon2.IDKey([]byte(plain), salt, iterations, memory, parallelism, uint32(hashLen))
+	computedHash := argon2.IDKey([]byte(plain), salt, time, memory, threads, uint32(hashLen))
 
-	// Constant time comparison to prevent timing attacks
-	if subtle.ConstantTimeCompare(computedHash, expectedHash) == 1 {
+	if subtle.ConstantTimeCompare(computedHash, actualHash) == 1 {
 		return true, nil
 	}
-
 	return false, nil
+}
+
+// parseParams parses the argon2 param string like "m=65536,t=3,p=4"
+func parseParams(paramStr string) (memory uint32, time uint32, threads uint8, err error) {
+	params := strings.Split(paramStr, ",")
+	if len(params) != 3 {
+		return 0, 0, 0, errors.New("invalid argon2 parameter count")
+	}
+
+	for _, param := range params {
+		kv := strings.SplitN(param, "=", 2)
+		if len(kv) != 2 {
+			return 0, 0, 0, fmt.Errorf("invalid param format: %q", param)
+		}
+		key, val := kv[0], kv[1]
+
+		switch key {
+		case "m":
+			u, err := strconv.ParseUint(val, 10, 32)
+			if err != nil {
+				return 0, 0, 0, fmt.Errorf("invalid memory: %w", err)
+			}
+			memory = uint32(u)
+		case "t":
+			u, err := strconv.ParseUint(val, 10, 32)
+			if err != nil {
+				return 0, 0, 0, fmt.Errorf("invalid time: %w", err)
+			}
+			time = uint32(u)
+		case "p":
+			u, err := strconv.ParseUint(val, 10, 8)
+			if err != nil {
+				return 0, 0, 0, fmt.Errorf("invalid threads: %w", err)
+			}
+			threads = uint8(u)
+		default:
+			return 0, 0, 0, fmt.Errorf("unexpected param: %s", key)
+		}
+	}
+
+	return memory, time, threads, nil
 }
