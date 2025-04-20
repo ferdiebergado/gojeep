@@ -13,13 +13,14 @@ import (
 )
 
 type Hasher interface {
-	Hash(plain string) (string, error)
-	Verify(plain, hashed string) (bool, error)
+	Hash(plain string) ([]byte, error)
+	Verify(plain string, hashed []byte) error
 }
 
 type Argon2Hasher struct{}
 
 var _ Hasher = (*Argon2Hasher)(nil)
+var ErrHashMismatch = errors.New("hash mismatch")
 
 // Parameters for the Argon2ID algorithm
 const (
@@ -31,11 +32,11 @@ const (
 )
 
 // Hash implements Hasher.
-func (h *Argon2Hasher) Hash(plain string) (string, error) {
+func (h *Argon2Hasher) Hash(plain string) ([]byte, error) {
 	// Generate a random salt
 	salt, err := GenerateRandomBytes(SaltLength)
 	if err != nil {
-		return "", fmt.Errorf("generate salt: %w", err)
+		return nil, fmt.Errorf("generate salt: %w", err)
 	}
 
 	// Hash the password
@@ -46,43 +47,44 @@ func (h *Argon2Hasher) Hash(plain string) (string, error) {
 	hashBase64 := base64.RawStdEncoding.EncodeToString(hash)
 
 	// Return the formatted password hash
-	return fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s",
-		Memory, Iterations, Parallelism, saltBase64, hashBase64), nil
+	encoded := fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s",
+		Memory, Iterations, Parallelism, saltBase64, hashBase64)
+
+	return []byte(encoded), nil
 }
 
 // Verify implements Hasher.
-func (h *Argon2Hasher) Verify(plain string, hashed string) (bool, error) {
-	parts := strings.Split(hashed, "$")
+func (h *Argon2Hasher) Verify(plain string, hashed []byte) error {
+	parts := strings.Split(string(hashed), "$")
 	if len(parts) != 6 {
-		return false, errors.New("invalid hash format")
+		return errors.New("invalid hash format")
 	}
 
 	memory, time, threads, err := parseParams(parts[3])
 	if err != nil {
-		return false, err
+		return fmt.Errorf("parse params: %w", err)
 	}
 
 	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {
-		return false, fmt.Errorf("base64 decode salt: %w", err)
+		return fmt.Errorf("base64 decode salt: %w", err)
 	}
 
 	actualHash, err := base64.RawStdEncoding.DecodeString(parts[5])
 	if err != nil {
-		return false, fmt.Errorf("base64 decode hash: %w", err)
+		return fmt.Errorf("base64 decode hash: %w", err)
 	}
 
 	hashLen := len(actualHash)
 	if hashLen > int(^uint32(0)) {
-		return false, errors.New("hash length exceeds uint32")
+		return errors.New("hash length exceeds uint32")
 	}
 
 	computedHash := argon2.IDKey([]byte(plain), salt, time, memory, threads, uint32(hashLen))
-
-	if subtle.ConstantTimeCompare(computedHash, actualHash) == 1 {
-		return true, nil
+	if subtle.ConstantTimeCompare(computedHash, actualHash) == 0 {
+		return ErrHashMismatch
 	}
-	return false, nil
+	return nil
 }
 
 // parseParams parses the argon2 param string like "m=65536,t=3,p=4"

@@ -90,7 +90,7 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 		return nil, fmt.Errorf("hasher hash: %w", err)
 	}
 
-	user, err := s.repo.CreateUser(ctx, repository.CreateUserParams{Email: email, PasswordHash: hash})
+	user, err := s.repo.CreateUser(ctx, repository.CreateUserParams{Email: email, PasswordHash: string(hash)})
 	if err != nil {
 		return nil, fmt.Errorf("create user %s: %w", email, err)
 	}
@@ -149,13 +149,11 @@ func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (st
 		return "", ErrUserNotVerified
 	}
 
-	ok, err := s.hasher.Verify(params.Password, user.PasswordHash)
-	if err != nil {
+	if err = s.hasher.Verify(params.Password, []byte(user.PasswordHash)); err != nil {
+		if errors.Is(err, security.ErrHashMismatch) {
+			return "", ErrUserNotFound
+		}
 		return "", err
-	}
-
-	if !ok {
-		return "", ErrUserNotFound
 	}
 
 	ttl := time.Duration(s.cfg.JWT.Duration) * time.Minute

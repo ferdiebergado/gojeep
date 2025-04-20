@@ -40,10 +40,10 @@ func (m *MockHasher) EXPECT() *MockHasherMockRecorder {
 }
 
 // Hash mocks base method.
-func (m *MockHasher) Hash(plain string) (string, error) {
+func (m *MockHasher) Hash(plain string) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Hash", plain)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -55,12 +55,11 @@ func (mr *MockHasherMockRecorder) Hash(plain any) *gomock.Call {
 }
 
 // Verify mocks base method.
-func (m *MockHasher) Verify(plain, hashed string) (bool, error) {
+func (m *MockHasher) Verify(plain string, hashed []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Verify", plain, hashed)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Verify indicates an expected call of Verify.

@@ -19,6 +19,7 @@ import (
 
 	mailMock "github.com/ferdiebergado/gojeep/internal/pkg/email/mock"
 	"github.com/ferdiebergado/gojeep/internal/pkg/logging"
+	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	secMock "github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
 )
 
@@ -75,7 +76,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 	audience := cfg.Server.URL + "/auth/verify"
 	ctx := context.Background()
 	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(nil, sql.ErrNoRows)
-	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
+	mockHasher.EXPECT().Hash(regParams.Password).Return([]byte(testPassHashed), nil)
 	data := map[string]string{
 		"Title":  title,
 		"Header": subject,
@@ -174,19 +175,17 @@ func TestUserService_LoginUser(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name         string
-		repoUser     *model.User
-		repoErr      error
-		hasherResult bool
-		hasherErr    error
-		wantToken    string
-		wantErr      error
+		name      string
+		repoUser  *model.User
+		repoErr   error
+		hasherErr error
+		wantToken string
+		wantErr   error
 	}{
 		{
-			name:         "Success_ValidCredentials",
-			repoUser:     user,
-			hasherResult: true,
-			wantToken:    "mocked_access_token",
+			name:      "Success_ValidCredentials",
+			repoUser:  user,
+			wantToken: "mocked_access_token",
 		},
 		{
 			name:    "Failure_UserNotFound",
@@ -204,10 +203,10 @@ func TestUserService_LoginUser(t *testing.T) {
 			wantErr: service.ErrUserNotVerified,
 		},
 		{
-			name:         "Failure_InvalidPassword",
-			repoUser:     user,
-			hasherResult: false,
-			wantErr:      service.ErrUserNotFound,
+			name:      "Failure_InvalidPassword",
+			repoUser:  user,
+			hasherErr: security.ErrHashMismatch,
+			wantErr:   service.ErrUserNotFound,
 		},
 		{
 			name:    "Failure_RepoError",
@@ -244,8 +243,8 @@ func TestUserService_LoginUser(t *testing.T) {
 
 			if tc.repoErr == nil {
 				mockHasher.EXPECT().
-					Verify(testPass, tc.repoUser.PasswordHash).
-					Return(tc.hasherResult, tc.hasherErr)
+					Verify(testPass, []byte(tc.repoUser.PasswordHash)).
+					Return(tc.hasherErr)
 			}
 
 			svc := service.NewUserService(&service.UserServiceDeps{
