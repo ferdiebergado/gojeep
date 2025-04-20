@@ -24,6 +24,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+//nolint:gochecknoglobals // cache struct info
 var validate *validator.Validate
 
 func main() {
