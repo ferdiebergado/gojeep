@@ -31,15 +31,15 @@ func TestMain(m *testing.M) {
 func TestUserService_RegisterUser(t *testing.T) {
 	t.Parallel()
 	const (
-		userID         = "1"
-		testEmail      = "abc@example.com"
-		testPass       = "test"
-		testPassHashed = "hashed"
-		token          = "testtoken"
-		title          = "Email verification"
-		subject        = "Verify your email"
-		tmpl           = "verification"
+		userID    = "1"
+		testEmail = "abc@example.com"
+		testPass  = "test"
+		token     = "testtoken"
+		title     = "Email verification"
+		subject   = "Verify your email"
+		tmpl      = "verification"
 	)
+	testPassHashed := []byte("hashed")
 
 	ctrl := gomock.NewController(t)
 	mockRepo := mock.NewMockUserRepository(ctrl)
@@ -156,10 +156,11 @@ func TestUserService_VerifyUser(t *testing.T) {
 func TestUserService_LoginUser(t *testing.T) {
 	t.Parallel()
 	const (
-		testEmail  = "abc@example.com"
-		testPass   = "test"
-		hashedPass = "hashed"
+		testEmail = "abc@example.com"
+		testPass  = "test"
 	)
+
+	hashedPass := []byte("hashed")
 
 	cfg := &config.Config{
 		Server: &config.ServerConfig{URL: "http://localhost:8888"},

@@ -33,6 +33,7 @@ func TestUserRepo_CreateUser(t *testing.T) {
 		email2 = "fail@example.com"
 		email3 = "scan@example.com"
 	)
+	passwordHash := []byte("hashed")
 
 	db, mock, err := sqlmock.New(sqlmockOpts)
 	if err != nil {
@@ -55,11 +56,11 @@ func TestUserRepo_CreateUser(t *testing.T) {
 			name: "Successful user creation",
 			params: repository.CreateUserParams{
 				Email:        email1,
-				PasswordHash: "hashed",
+				PasswordHash: passwordHash,
 			},
 			mockSetup: func() {
 				mock.ExpectQuery(repository.QueryUserCreate).
-					WithArgs(email1, "hashed").
+					WithArgs(email1, passwordHash).
 					WillReturnRows(sqlmock.NewRows([]string{id, email, createdAt, updatedAt}).
 						AddRow("1", email1, now, now))
 			},
@@ -70,11 +71,11 @@ func TestUserRepo_CreateUser(t *testing.T) {
 			name: "Database error",
 			params: repository.CreateUserParams{
 				Email:        email2,
-				PasswordHash: "hashed",
+				PasswordHash: passwordHash,
 			},
 			mockSetup: func() {
 				mock.ExpectQuery(repository.QueryUserCreate).
-					WithArgs(email2, "hashed").
+					WithArgs(email2, passwordHash).
 					WillReturnError(errors.New("insert failed"))
 			},
 			expectErr: true,
@@ -83,11 +84,11 @@ func TestUserRepo_CreateUser(t *testing.T) {
 			name: "Invalid row scan",
 			params: repository.CreateUserParams{
 				Email:        email3,
-				PasswordHash: "hashed",
+				PasswordHash: passwordHash,
 			},
 			mockSetup: func() {
 				mock.ExpectQuery(repository.QueryUserCreate).
-					WithArgs(email3, "hashed").
+					WithArgs(email3, passwordHash).
 					WillReturnRows(sqlmock.NewRows([]string{id, createdAt, updatedAt}).
 						AddRow("1", now, now))
 			},

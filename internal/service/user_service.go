@@ -90,7 +90,7 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 		return nil, fmt.Errorf("hasher hash: %w", err)
 	}
 
-	user, err := s.repo.CreateUser(ctx, repository.CreateUserParams{Email: email, PasswordHash: string(hash)})
+	user, err := s.repo.CreateUser(ctx, repository.CreateUserParams{Email: email, PasswordHash: hash})
 	if err != nil {
 		return nil, fmt.Errorf("create user %s: %w", email, err)
 	}

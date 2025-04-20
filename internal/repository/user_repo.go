@@ -26,7 +26,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 
 type CreateUserParams struct {
 	Email        string
-	PasswordHash string
+	PasswordHash []byte
 }
 
 const QueryUserCreate = `
