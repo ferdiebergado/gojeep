@@ -12,11 +12,6 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-type Hasher interface {
-	Hash(plain string) ([]byte, error)
-	Verify(plain string, hashed []byte) error
-}
-
 type Argon2Hasher struct{}
 
 var _ Hasher = (*Argon2Hasher)(nil)
