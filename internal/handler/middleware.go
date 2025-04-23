@@ -17,7 +17,7 @@ func DecodeJSON[T any]() func(next http.Handler) http.Handler {
 			contentType := r.Header.Get(HeaderContentType)
 
 			if contentType != MimeJSON {
-				badRequestResponse(w, fmt.Errorf("Invalid content-type: %s", contentType), message.UserInputInvalid)
+				unsupportedContentTypeResponse(w, fmt.Errorf("Invalid content-type: %s", contentType), message.UserInputInvalid)
 				return
 			}
 
