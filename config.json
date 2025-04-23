@@ -18,6 +18,13 @@
     "issuer": "http://localhost:8888",
     "duration": 30
   },
+  "hash": {
+    "memory": 65536,
+    "iterations": 3,
+    "threads": 2,
+    "salt_length": 16,
+    "key_length": 32
+  },
   "email": {
     "sender": "noreply@example.com",
     "verify_ttl": 300,

@@ -99,11 +99,20 @@ type JWTOptions struct {
 	Duration int    `json:"duration,omitempty"`
 }
 
+type Argon2Options struct {
+	Memory     uint32 `json:"memory,omitempty"`
+	Iterations uint32 `json:"iterations,omitempty"`
+	Threads    uint8  `json:"threads,omitempty"`
+	SaltLength uint32 `json:"salt_length,omitempty"`
+	KeyLength  uint32 `json:"key_length,omitempty"`
+}
+
 type Options struct {
 	Server *ServerOptions `json:"server,omitempty"`
 	DB     *DBOptions     `json:"db,omitempty"`
 	JWT    *JWTOptions    `json:"jwt,omitempty"`
 	Email  *EmailOptions  `json:"email,omitempty"`
+	Hash   *Argon2Options `json:"hash,omitempty"`
 }
 
 type Config struct {
@@ -111,6 +120,7 @@ type Config struct {
 	DB     *DBConfig
 	Email  *SMTPConfig
 	JWT    *JWTOptions
+	Hash   *Argon2Options
 }
 
 func (c *Config) LogValue() slog.Value {
@@ -119,6 +129,7 @@ func (c *Config) LogValue() slog.Value {
 		slog.Any("db", c.DB),
 		slog.Any("email", c.Email),
 		slog.Any("jwt", c.JWT),
+		slog.Any("hash", c.Hash),
 	)
 }
 
@@ -155,7 +166,8 @@ func Load(cfgFile string) (*Config, error) {
 			Port:     env.GetInt("SMTP_PORT", envDefaultSMTPPort),
 			Options:  opts.Email,
 		},
-		JWT: opts.JWT,
+		JWT:  opts.JWT,
+		Hash: opts.Hash,
 	}
 
 	slog.Debug("config loaded", slog.Any("config", cfg))

@@ -7,33 +7,42 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ferdiebergado/gojeep/internal/config"
 	"golang.org/x/crypto/argon2"
 )
 
-type Argon2Hasher struct{}
+type Argon2Hasher struct {
+	memory     uint32
+	iterations uint32
+	threads    uint8
+	saltLen    uint32
+	keyLen     uint32
+	pepper     string
+}
 
 var _ Hasher = (*Argon2Hasher)(nil)
-var ErrHashMismatch = errors.New("hash mismatch")
 
-// Parameters for the Argon2ID algorithm
-const (
-	Memory      = 64 * 1024 // 64 MB
-	Iterations  = 3
-	Parallelism = 2
-	SaltLength  = 16 // 16 bytes
-	KeyLength   = 32 // 32 bytes
-)
+func NewArgon2Hasher(cfg *config.Argon2Options, pepper string) *Argon2Hasher {
+	return &Argon2Hasher{
+		memory:     cfg.Memory,
+		iterations: cfg.Iterations,
+		threads:    cfg.Threads,
+		saltLen:    cfg.SaltLength,
+		keyLen:     cfg.KeyLength,
+		pepper:     pepper,
+	}
+}
 
 // Hash implements Hasher.
 func (h *Argon2Hasher) Hash(plain string) (string, error) {
 	// Generate a random salt
-	salt, err := GenerateRandomBytes(SaltLength)
+	salt, err := GenerateRandomBytes(h.saltLen)
 	if err != nil {
 		return "", fmt.Errorf("generate salt: %w", err)
 	}
 
 	// Hash the password
-	hash := argon2.IDKey([]byte(plain), salt, Iterations, Memory, Parallelism, KeyLength)
+	hash := argon2.IDKey([]byte(plain+h.pepper), salt, h.iterations, h.memory, h.threads, h.keyLen)
 
 	// Encode the salt and hash for storage
 	saltBase64 := base64.RawStdEncoding.EncodeToString(salt)
@@ -41,7 +50,7 @@ func (h *Argon2Hasher) Hash(plain string) (string, error) {
 
 	// Return the formatted password hash
 	encoded := fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s",
-		Memory, Iterations, Parallelism, saltBase64, hashBase64)
+		h.memory, h.iterations, h.threads, saltBase64, hashBase64)
 
 	return encoded, nil
 }
@@ -75,7 +84,7 @@ func (h *Argon2Hasher) Verify(plain string, hashed string) (bool, error) {
 		return false, errors.New("hash length exceeds uint32")
 	}
 
-	computedHash := argon2.IDKey([]byte(plain), salt, time, memory, threads, uint32(hashLen))
+	computedHash := argon2.IDKey([]byte(plain+h.pepper), salt, time, memory, threads, uint32(hashLen))
 	if subtle.ConstantTimeCompare(computedHash, actualHash) == 1 {
 		return true, nil
 	}
