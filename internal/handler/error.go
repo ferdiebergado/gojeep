@@ -19,6 +19,10 @@ func unauthorizedResponse(w http.ResponseWriter, err error, msg string) {
 	errorResponse(w, http.StatusUnauthorized, err, msg)
 }
 
+func unsupportedContentTypeResponse(w http.ResponseWriter, err error, msg string) {
+	errorResponse(w, http.StatusUnsupportedMediaType, err, msg)
+}
+
 func errorResponse(w http.ResponseWriter, status int, err error, msg string) {
 	slog.Error("Client error", "reason", err)
 	res := Response[any]{
