@@ -71,7 +71,10 @@ type LoginUserParams struct {
 }
 
 func (p *LoginUserParams) LogValue() slog.Value {
-	return slog.AnyValue(nil)
+	return slog.GroupValue(
+		slog.String("email", "*"),
+		slog.String("password", "*"),
+	)
 }
 
 func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParams) (*model.User, error) {
