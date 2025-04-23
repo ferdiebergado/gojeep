@@ -86,7 +86,7 @@ func run(ctx context.Context) error {
 func setupDependencies(cfg *config.Config, db *sql.DB) (*dependencies, error) {
 	httpRouter := router.New()
 	validate = validation.New()
-	hasher := security.NewBcryptHasher(14)
+	hasher := &security.Argon2Hasher{}
 	mailer, err := email.New(cfg.Email)
 	if err != nil {
 		return nil, err
