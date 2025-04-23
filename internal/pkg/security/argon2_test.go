@@ -29,6 +29,7 @@ func TestArgon2Hasher_Verify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = hasher.Verify(password, hashed)
+	isValid, err := hasher.Verify(password, hashed)
 	assert.NoError(t, err)
+	assert.True(t, isValid)
 }

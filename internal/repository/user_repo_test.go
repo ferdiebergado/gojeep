@@ -29,11 +29,11 @@ var (
 
 func TestUserRepo_CreateUser(t *testing.T) {
 	const (
-		email1 = "abc@example.com"
-		email2 = "fail@example.com"
-		email3 = "scan@example.com"
+		email1       = "abc@example.com"
+		email2       = "fail@example.com"
+		email3       = "scan@example.com"
+		passwordHash = "hashed"
 	)
-	passwordHash := []byte("hashed")
 
 	db, mock, err := sqlmock.New(sqlmockOpts)
 	if err != nil {

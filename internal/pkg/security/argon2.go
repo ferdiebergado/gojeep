@@ -1,4 +1,3 @@
-//go:generate mockgen -destination=mock/hasher_mock.go -package=mock . Hasher
 package security
 
 import (
@@ -6,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
@@ -27,11 +25,11 @@ const (
 )
 
 // Hash implements Hasher.
-func (h *Argon2Hasher) Hash(plain string) ([]byte, error) {
+func (h *Argon2Hasher) Hash(plain string) (string, error) {
 	// Generate a random salt
 	salt, err := GenerateRandomBytes(SaltLength)
 	if err != nil {
-		return nil, fmt.Errorf("generate salt: %w", err)
+		return "", fmt.Errorf("generate salt: %w", err)
 	}
 
 	// Hash the password
@@ -45,80 +43,41 @@ func (h *Argon2Hasher) Hash(plain string) ([]byte, error) {
 	encoded := fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s",
 		Memory, Iterations, Parallelism, saltBase64, hashBase64)
 
-	return []byte(encoded), nil
+	return encoded, nil
 }
 
 // Verify implements Hasher.
-func (h *Argon2Hasher) Verify(plain string, hashed []byte) error {
-	parts := strings.Split(string(hashed), "$")
-	if len(parts) != 6 {
-		return errors.New("invalid hash format")
+func (h *Argon2Hasher) Verify(plain string, hashed string) (bool, error) {
+	parts := strings.Split(hashed, "$")
+	if len(parts) != 6 || parts[1] != "argon2id" {
+		return false, fmt.Errorf("invalid hash format")
 	}
 
-	memory, time, threads, err := parseParams(parts[3])
+	var memory, time uint32
+	var threads uint8
+	_, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &time, &threads)
 	if err != nil {
-		return fmt.Errorf("parse params: %w", err)
+		return false, err
 	}
 
 	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
 	if err != nil {
-		return fmt.Errorf("base64 decode salt: %w", err)
+		return false, fmt.Errorf("base64 decode salt: %w", err)
 	}
 
 	actualHash, err := base64.RawStdEncoding.DecodeString(parts[5])
 	if err != nil {
-		return fmt.Errorf("base64 decode hash: %w", err)
+		return false, fmt.Errorf("base64 decode hash: %w", err)
 	}
 
 	hashLen := len(actualHash)
 	if hashLen > int(^uint32(0)) {
-		return errors.New("hash length exceeds uint32")
+		return false, errors.New("hash length exceeds uint32")
 	}
 
 	computedHash := argon2.IDKey([]byte(plain), salt, time, memory, threads, uint32(hashLen))
-	if subtle.ConstantTimeCompare(computedHash, actualHash) == 0 {
-		return ErrHashMismatch
+	if subtle.ConstantTimeCompare(computedHash, actualHash) == 1 {
+		return true, nil
 	}
-	return nil
-}
-
-// parseParams parses the argon2 param string like "m=65536,t=3,p=4"
-func parseParams(paramStr string) (memory uint32, time uint32, threads uint8, err error) {
-	params := strings.Split(paramStr, ",")
-	if len(params) != 3 {
-		return 0, 0, 0, errors.New("invalid argon2 parameter count")
-	}
-
-	for _, param := range params {
-		kv := strings.SplitN(param, "=", 2)
-		if len(kv) != 2 {
-			return 0, 0, 0, fmt.Errorf("invalid param format: %q", param)
-		}
-		key, val := kv[0], kv[1]
-
-		switch key {
-		case "m":
-			u, err := strconv.ParseUint(val, 10, 32)
-			if err != nil {
-				return 0, 0, 0, fmt.Errorf("invalid memory: %w", err)
-			}
-			memory = uint32(u)
-		case "t":
-			u, err := strconv.ParseUint(val, 10, 32)
-			if err != nil {
-				return 0, 0, 0, fmt.Errorf("invalid time: %w", err)
-			}
-			time = uint32(u)
-		case "p":
-			u, err := strconv.ParseUint(val, 10, 8)
-			if err != nil {
-				return 0, 0, 0, fmt.Errorf("invalid threads: %w", err)
-			}
-			threads = uint8(u)
-		default:
-			return 0, 0, 0, fmt.Errorf("unexpected param: %s", key)
-		}
-	}
-
-	return memory, time, threads, nil
+	return false, nil
 }

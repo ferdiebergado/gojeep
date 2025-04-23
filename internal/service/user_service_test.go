@@ -19,7 +19,6 @@ import (
 
 	mailMock "github.com/ferdiebergado/gojeep/internal/pkg/email/mock"
 	"github.com/ferdiebergado/gojeep/internal/pkg/logging"
-	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	secMock "github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
 )
 
@@ -31,15 +30,15 @@ func TestMain(m *testing.M) {
 func TestUserService_RegisterUser(t *testing.T) {
 	t.Parallel()
 	const (
-		userID    = "1"
-		testEmail = "abc@example.com"
-		testPass  = "test"
-		token     = "testtoken"
-		title     = "Email verification"
-		subject   = "Verify your email"
-		tmpl      = "verification"
+		userID         = "1"
+		testEmail      = "abc@example.com"
+		testPass       = "test"
+		token          = "testtoken"
+		title          = "Email verification"
+		subject        = "Verify your email"
+		tmpl           = "verification"
+		testPassHashed = "hashed"
 	)
-	testPassHashed := []byte("hashed")
 
 	ctrl := gomock.NewController(t)
 	mockRepo := mock.NewMockUserRepository(ctrl)
@@ -76,7 +75,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 	audience := cfg.Server.URL + "/auth/verify"
 	ctx := context.Background()
 	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(nil, sql.ErrNoRows)
-	mockHasher.EXPECT().Hash(regParams.Password).Return([]byte(testPassHashed), nil)
+	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
 	data := map[string]string{
 		"Title":  title,
 		"Header": subject,
@@ -156,11 +155,10 @@ func TestUserService_VerifyUser(t *testing.T) {
 func TestUserService_LoginUser(t *testing.T) {
 	t.Parallel()
 	const (
-		testEmail = "abc@example.com"
-		testPass  = "test"
+		testEmail  = "abc@example.com"
+		testPass   = "test"
+		hashedPass = "hashed"
 	)
-
-	hashedPass := []byte("hashed")
 
 	cfg := &config.Config{
 		Server: &config.ServerConfig{URL: "http://localhost:8888"},
@@ -176,17 +174,19 @@ func TestUserService_LoginUser(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name      string
-		repoUser  *model.User
-		repoErr   error
-		hasherErr error
-		wantToken string
-		wantErr   error
+		name         string
+		repoUser     *model.User
+		repoErr      error
+		hasherResult bool
+		hasherErr    error
+		wantToken    string
+		wantErr      error
 	}{
 		{
-			name:      "Success_ValidCredentials",
-			repoUser:  user,
-			wantToken: "mocked_access_token",
+			name:         "Success_ValidCredentials",
+			repoUser:     user,
+			hasherResult: true,
+			wantToken:    "mocked_access_token",
 		},
 		{
 			name:    "Failure_UserNotFound",
@@ -204,10 +204,11 @@ func TestUserService_LoginUser(t *testing.T) {
 			wantErr: service.ErrUserNotVerified,
 		},
 		{
-			name:      "Failure_InvalidPassword",
-			repoUser:  user,
-			hasherErr: security.ErrHashMismatch,
-			wantErr:   service.ErrUserNotFound,
+			name:         "Failure_InvalidPassword",
+			repoUser:     user,
+			hasherResult: false,
+			hasherErr:    nil,
+			wantErr:      service.ErrUserNotFound,
 		},
 		{
 			name:    "Failure_RepoError",
@@ -215,10 +216,11 @@ func TestUserService_LoginUser(t *testing.T) {
 			wantErr: errors.New("database failure"),
 		},
 		{
-			name:      "Failure_HasherError",
-			repoUser:  user,
-			hasherErr: errors.New("hash mismatch"),
-			wantErr:   errors.New("hash mismatch"),
+			name:         "Failure_HasherError",
+			repoUser:     user,
+			hasherResult: false,
+			hasherErr:    errors.New("hash length exceeds uint32"),
+			wantErr:      errors.New("hash length exceeds uint32"),
 		},
 	}
 
@@ -244,8 +246,8 @@ func TestUserService_LoginUser(t *testing.T) {
 
 			if tc.repoErr == nil {
 				mockHasher.EXPECT().
-					Verify(testPass, []byte(tc.repoUser.PasswordHash)).
-					Return(tc.hasherErr)
+					Verify(testPass, tc.repoUser.PasswordHash).
+					Return(tc.hasherResult, tc.hasherErr)
 			}
 
 			svc := service.NewUserService(&service.UserServiceDeps{

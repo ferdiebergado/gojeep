@@ -7,6 +7,6 @@ import (
 type User struct {
 	Model
 	Email        string
-	PasswordHash []byte
+	PasswordHash string
 	VerifiedAt   *time.Time
 }

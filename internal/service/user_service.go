@@ -149,11 +149,13 @@ func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (st
 		return "", ErrUserNotVerified
 	}
 
-	if err = s.hasher.Verify(params.Password, []byte(user.PasswordHash)); err != nil {
-		if errors.Is(err, security.ErrHashMismatch) {
-			return "", ErrUserNotFound
-		}
+	ok, err := s.hasher.Verify(params.Password, user.PasswordHash)
+	if err != nil {
 		return "", err
+	}
+
+	if !ok {
+		return "", ErrUserNotFound
 	}
 
 	ttl := time.Duration(s.cfg.JWT.Duration) * time.Minute
