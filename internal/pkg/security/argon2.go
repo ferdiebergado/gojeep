@@ -3,7 +3,6 @@ package security
 import (
 	"crypto/subtle"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -38,7 +37,7 @@ func (h *Argon2Hasher) Hash(plain string) (string, error) {
 	// Generate a random salt
 	salt, err := GenerateRandomBytes(h.saltLen)
 	if err != nil {
-		return "", fmt.Errorf("generate salt: %w", err)
+		return "", fmt.Errorf("generate salt with length %d: %w", h.saltLen, err)
 	}
 
 	// Hash the password
@@ -81,7 +80,7 @@ func (h *Argon2Hasher) Verify(plain string, hashed string) (bool, error) {
 
 	hashLen := len(actualHash)
 	if hashLen > int(^uint32(0)) {
-		return false, errors.New("hash length exceeds uint32")
+		return false, fmt.Errorf("hash length %d exceeds uint32:", hashLen)
 	}
 
 	computedHash := argon2.IDKey([]byte(plain+h.pepper), salt, time, memory, threads, uint32(hashLen))
