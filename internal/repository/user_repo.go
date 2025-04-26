@@ -9,8 +9,8 @@ import (
 )
 
 type UserRepository interface {
-	CreateUser(ctx context.Context, params CreateUserParams) (*model.User, error)
-	FindUserByEmail(ctx context.Context, email string) (*model.User, error)
+	CreateUser(ctx context.Context, params CreateUserParams) (model.User, error)
+	FindUserByEmail(ctx context.Context, email string) (model.User, error)
 	VerifyUser(ctx context.Context, userID string) error
 }
 
@@ -35,13 +35,13 @@ VALUES ($1, $2)
 RETURNING id, email, created_at, updated_at
 `
 
-func (r *userRepo) CreateUser(ctx context.Context, params CreateUserParams) (*model.User, error) {
+func (r *userRepo) CreateUser(ctx context.Context, params CreateUserParams) (model.User, error) {
 	var user model.User
 	if err := r.db.QueryRowContext(ctx, QueryUserCreate, params.Email, params.PasswordHash).
 		Scan(&user.ID, &user.Email, &user.CreatedAt, &user.UpdatedAt); err != nil {
-		return nil, err
+		return model.User{}, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 const QueryUserFindByEmail = `
@@ -50,13 +50,13 @@ WHERE email = $1
 LIMIT 1
 `
 
-func (r *userRepo) FindUserByEmail(ctx context.Context, email string) (*model.User, error) {
+func (r *userRepo) FindUserByEmail(ctx context.Context, email string) (model.User, error) {
 	var user model.User
 	if err := r.db.QueryRowContext(ctx, QueryUserFindByEmail, email).
 		Scan(&user.ID, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt, &user.VerifiedAt); err != nil {
-		return nil, err
+		return model.User{}, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 const QueryUserVerify = `

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"reflect"
 	"time"
 
 	"github.com/ferdiebergado/gojeep/internal/config"
@@ -17,7 +18,7 @@ import (
 )
 
 type UserService interface {
-	RegisterUser(ctx context.Context, params RegisterUserParams) (*model.User, error)
+	RegisterUser(ctx context.Context, params RegisterUserParams) (model.User, error)
 	VerifyUser(ctx context.Context, token string) error
 	LoginUser(ctx context.Context, params LoginUserParams) (string, error)
 }
@@ -77,25 +78,25 @@ func (p *LoginUserParams) LogValue() slog.Value {
 	)
 }
 
-func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParams) (*model.User, error) {
+func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParams) (model.User, error) {
 	email := params.Email
 	existing, err := s.repo.FindUserByEmail(ctx, email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, err
+		return model.User{}, err
 	}
 
-	if existing != nil {
-		return nil, ErrUserExists
+	if !reflect.DeepEqual(existing, model.User{}) {
+		return model.User{}, ErrUserExists
 	}
 
 	hash, err := s.hasher.Hash(params.Password)
 	if err != nil {
-		return nil, fmt.Errorf("hasher hash: %w", err)
+		return model.User{}, fmt.Errorf("hasher hash: %w", err)
 	}
 
 	user, err := s.repo.CreateUser(ctx, repository.CreateUserParams{Email: email, PasswordHash: hash})
 	if err != nil {
-		return nil, fmt.Errorf("create user %s: %w", email, err)
+		return model.User{}, fmt.Errorf("create user %s: %w", email, err)
 	}
 
 	go s.sendVerificationEmail(user)
@@ -103,7 +104,7 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 	return user, nil
 }
 
-func (s *userService) sendVerificationEmail(user *model.User) {
+func (s *userService) sendVerificationEmail(user model.User) {
 	slog.Info("Sending verification email...")
 
 	const (

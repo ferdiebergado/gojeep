@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/ferdiebergado/gojeep/internal/model"
 	"github.com/ferdiebergado/gojeep/internal/repository"
 	"github.com/stretchr/testify/assert"
 )
@@ -103,7 +104,7 @@ func TestUserRepo_CreateUser(t *testing.T) {
 			newUser, err := repo.CreateUser(context.Background(), tt.params)
 			if tt.expectErr {
 				assert.Error(t, err)
-				assert.Nil(t, newUser)
+				assert.Equal(t, model.User{}, newUser)
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, newUser, "New user should not be empty")
@@ -189,7 +190,7 @@ func TestUserRepo_FindUserByEmail(t *testing.T) {
 			user, err := repo.FindUserByEmail(context.Background(), tt.email)
 			if tt.expectErr {
 				assert.Error(t, err)
-				assert.Nil(t, user)
+				assert.Equal(t, model.User{}, user)
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, user)

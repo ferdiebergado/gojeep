@@ -58,10 +58,10 @@ func (mr *MockUserServiceMockRecorder) LoginUser(ctx, params any) *gomock.Call {
 }
 
 // RegisterUser mocks base method.
-func (m *MockUserService) RegisterUser(ctx context.Context, params service.RegisterUserParams) (*model.User, error) {
+func (m *MockUserService) RegisterUser(ctx context.Context, params service.RegisterUserParams) (model.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterUser", ctx, params)
-	ret0, _ := ret[0].(*model.User)
+	ret0, _ := ret[0].(model.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

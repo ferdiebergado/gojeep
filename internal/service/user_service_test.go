@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"os"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -56,7 +57,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 		PasswordHash: testPassHashed,
 	}
 
-	user := &model.User{
+	user := model.User{
 		Model: model.Model{ID: userID, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		Email: testEmail,
 	}
@@ -74,7 +75,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 
 	audience := cfg.Server.URL + "/auth/verify"
 	ctx := context.Background()
-	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(nil, sql.ErrNoRows)
+	mockRepo.EXPECT().FindUserByEmail(ctx, testEmail).Return(model.User{}, sql.ErrNoRows)
 	mockHasher.EXPECT().Hash(regParams.Password).Return(testPassHashed, nil)
 	data := map[string]string{
 		"Title":  title,
@@ -166,7 +167,7 @@ func TestUserService_LoginUser(t *testing.T) {
 	}
 	loginParams := service.LoginUserParams{Email: testEmail, Password: testPass}
 	verifiedAt := time.Date(2024, 1, 1, 1, 1, 1, 1, time.UTC)
-	user := &model.User{
+	user := model.User{
 		Model:        model.Model{ID: "1"},
 		Email:        testEmail,
 		PasswordHash: hashedPass,
@@ -175,7 +176,7 @@ func TestUserService_LoginUser(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		repoUser     *model.User
+		repoUser     model.User
 		repoErr      error
 		hasherResult bool
 		hasherErr    error
@@ -195,7 +196,7 @@ func TestUserService_LoginUser(t *testing.T) {
 		},
 		{
 			name: "Failure_UserUnverified",
-			repoUser: &model.User{
+			repoUser: model.User{
 				Model:        model.Model{ID: "1"},
 				Email:        testEmail,
 				PasswordHash: hashedPass,
@@ -234,7 +235,7 @@ func TestUserService_LoginUser(t *testing.T) {
 			mockHasher := secMock.NewMockHasher(ctrl)
 			mockSigner := secMock.NewMockSigner(ctrl)
 
-			if tc.repoUser != nil && tc.repoErr == nil && tc.wantToken != "" {
+			if !reflect.DeepEqual(tc.repoUser, model.User{}) && tc.repoErr == nil && tc.wantToken != "" {
 				mockSigner.EXPECT().Sign(tc.repoUser.ID, []string{cfg.JWT.Issuer}, 30*time.Minute).
 					Return("mocked_access_token", nil)
 			}

@@ -47,7 +47,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestUserHandler_HandleUserRegister(t *testing.T) {
-	user := &model.User{
+	user := model.User{
 		Model: model.Model{ID: "1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		Email: testEmail,
 	}
@@ -116,7 +116,7 @@ func TestUserHandler_HandleUserRegister(t *testing.T) {
 						Email:    testEmail,
 						Password: testPass,
 					}).
-					Return(nil, service.ErrUserExists)
+					Return(model.User{}, service.ErrUserExists)
 			},
 			expectedStatus: http.StatusUnprocessableEntity,
 			expectedMsg:    message.UserExists,
