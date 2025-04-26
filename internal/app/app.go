@@ -14,17 +14,8 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type app struct {
-	cfg       *config.Config
-	db        *sql.DB
-	handler   router.Router
-	validater *validator.Validate
-	hasher    security.Hasher
-	mailer    email.Mailer
-	signer    security.Signer
-}
-
-type Dependencies struct {
+// Dependencies holds all external dependencies required by the application.
+type dependencies struct {
 	Config    *config.Config
 	DB        *sql.DB
 	Router    router.Router
@@ -34,8 +25,39 @@ type Dependencies struct {
 	Signer    security.Signer
 }
 
-func New(deps *Dependencies) *app {
-	app := &app{
+// NewDependencies creates and initializes all dependencies.
+func newDependencies(cfg *config.Config, db *sql.DB, validate *validator.Validate) (*dependencies, error) {
+	mailer, err := email.New(cfg.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	deps := &dependencies{
+		Config:    cfg,
+		DB:        db,
+		Router:    router.New(),
+		Validator: validate,
+		Hasher:    security.NewArgon2Hasher(cfg.Hash, cfg.Server.Key),
+		Mailer:    mailer,
+		Signer:    security.NewSigner(cfg),
+	}
+	return deps, nil
+}
+
+// Application represents the core application with all dependencies wired.
+type application struct {
+	cfg       *config.Config
+	db        *sql.DB
+	handler   router.Router
+	validater *validator.Validate
+	hasher    security.Hasher
+	mailer    email.Mailer
+	signer    security.Signer
+}
+
+// New creates a new Application instance with the provided dependencies.
+func New(deps *dependencies) *application {
+	app := &application{
 		cfg:       deps.Config,
 		db:        deps.DB,
 		handler:   deps.Router,
@@ -48,16 +70,16 @@ func New(deps *Dependencies) *app {
 	return app
 }
 
-func (a *app) Router() router.Router {
+func (a *application) Router() router.Router {
 	return a.handler
 }
 
-func (a *app) SetupMiddlewares() {
+func (a *application) SetupMiddlewares() {
 	a.handler.Use(goexpress.RecoverFromPanic)
 	a.handler.Use(goexpress.LogRequest)
 }
 
-func (a *app) SetupRoutes() {
+func (a *application) SetupRoutes() {
 	repo := repository.NewRepository(a.db)
 	deps := &service.Dependencies{
 		Repo:   *repo,
