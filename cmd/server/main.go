@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ferdiebergado/gojeep/internal/app"
 	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/handler"
 	"github.com/ferdiebergado/gojeep/internal/infra/db"
@@ -68,10 +69,10 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	app := newApp(deps)
-	app.SetupRoutes()
+	application := app.New(deps)
+	application.SetupRoutes()
 
-	apiServer := server.New(cfg.Server, app.Router())
+	apiServer := server.New(cfg.Server, application.Router())
 	apiServerErr := apiServer.Start()
 	select {
 	case <-ctx.Done():
@@ -83,7 +84,7 @@ func run(ctx context.Context) error {
 	return apiServer.Shutdown()
 }
 
-func setupDependencies(cfg *config.Config, db *sql.DB) (*dependencies, error) {
+func setupDependencies(cfg *config.Config, db *sql.DB) (*app.Dependencies, error) {
 	httpRouter := router.New()
 	validate = validation.New()
 	hasher := security.NewArgon2Hasher(cfg.Hash, cfg.Server.Key)
@@ -93,7 +94,7 @@ func setupDependencies(cfg *config.Config, db *sql.DB) (*dependencies, error) {
 	}
 	signer := security.NewSigner(cfg)
 
-	deps := &dependencies{
+	deps := &app.Dependencies{
 		Config:    cfg,
 		DB:        db,
 		Router:    httpRouter,

@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"database/sql"
@@ -24,7 +24,7 @@ type app struct {
 	signer    security.Signer
 }
 
-type dependencies struct {
+type Dependencies struct {
 	Config    *config.Config
 	DB        *sql.DB
 	Router    router.Router
@@ -34,7 +34,7 @@ type dependencies struct {
 	Signer    security.Signer
 }
 
-func newApp(deps *dependencies) *app {
+func New(deps *Dependencies) *app {
 	app := &app{
 		cfg:       deps.Config,
 		db:        deps.DB,
