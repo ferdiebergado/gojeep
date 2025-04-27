@@ -16,13 +16,13 @@ func TestRequireAuth(t *testing.T) {
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, ok := handler.FromUserContext(r.Context())
 		if !ok {
-			t.Error("User context not found")
+			t.Fatal("User context not found")
 			return
 		}
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write([]byte(user))
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 			return
 		}
 	})
