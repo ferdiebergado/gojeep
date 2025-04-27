@@ -238,6 +238,8 @@ func TestUserService_LoginUser(t *testing.T) {
 			if !reflect.DeepEqual(tc.repoUser, model.User{}) && tc.repoErr == nil && tc.wantToken != "" {
 				mockSigner.EXPECT().Sign(tc.repoUser.ID, []string{cfg.JWT.Issuer}, 30*time.Minute).
 					Return("mocked_access_token", nil)
+				mockSigner.EXPECT().Sign(tc.repoUser.ID, []string{cfg.JWT.Issuer}, 7*24*time.Hour).
+					Return("mocked_refresh_token", nil)
 			}
 
 			ctx := context.Background()
@@ -258,14 +260,15 @@ func TestUserService_LoginUser(t *testing.T) {
 				Signer: mockSigner,
 			})
 
-			token, err := svc.LoginUser(ctx, loginParams)
+			// TODO: add refreshToken to test cases
+			accessToken, _, err := svc.LoginUser(ctx, loginParams)
 
 			if tc.wantErr != nil {
 				assert.ErrorContains(t, err, tc.wantErr.Error())
-				assert.Empty(t, token)
+				assert.Empty(t, accessToken)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tc.wantToken, token)
+				assert.Equal(t, tc.wantToken, accessToken)
 			}
 		})
 	}

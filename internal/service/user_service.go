@@ -20,7 +20,7 @@ import (
 type UserService interface {
 	RegisterUser(ctx context.Context, params RegisterUserParams) (model.User, error)
 	VerifyUser(ctx context.Context, token string) error
-	LoginUser(ctx context.Context, params LoginUserParams) (string, error)
+	LoginUser(ctx context.Context, params LoginUserParams) (accessToken, refreshToken string, err error)
 }
 
 type UserServiceDeps struct {
@@ -140,28 +140,39 @@ func (s *userService) VerifyUser(ctx context.Context, token string) error {
 	return s.repo.VerifyUser(ctx, userID)
 }
 
-func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (string, error) {
+func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (accessToken, refreshToken string, err error) {
 	user, err := s.repo.FindUserByEmail(ctx, params.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", ErrUserNotFound
+			return "", "", ErrUserNotFound
 		}
-		return "", err
+		return "", "", err
 	}
 
 	if user.VerifiedAt == nil {
-		return "", ErrUserNotVerified
+		return "", "", ErrUserNotVerified
 	}
 
 	ok, err := s.hasher.Verify(params.Password, user.PasswordHash)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if !ok {
-		return "", ErrUserNotFound
+		return "", "", ErrUserNotFound
 	}
 
 	ttl := time.Duration(s.cfg.JWT.Duration) * time.Minute
-	return s.signer.Sign(user.ID, []string{s.cfg.JWT.Issuer}, ttl)
+	accessToken, err = s.signer.Sign(user.ID, []string{s.cfg.JWT.Issuer}, ttl)
+	if err != nil {
+		return "", "", err
+	}
+
+	// TODO: add refresh token ttl to config
+	refreshToken, err = s.signer.Sign(user.ID, []string{s.cfg.JWT.Issuer}, time.Hour*24*7)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }

@@ -161,7 +161,7 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		Email:    req.Email,
 		Password: req.Password,
 	}
-	accessToken, err := h.service.LoginUser(r.Context(), params)
+	accessToken, refreshToken, err := h.service.LoginUser(r.Context(), params)
 	if err != nil {
 		if errors.Is(err, service.ErrUserNotFound) {
 			unauthorizedResponse(w, err, message.UserNotFound)
@@ -176,6 +176,16 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		response.ServerError(w, err)
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   7 * 24 * 60 * 60, // 7 days
+	})
 
 	res := Response[*UserLoginResponse]{
 		Message: message.UserLoginSuccess,
