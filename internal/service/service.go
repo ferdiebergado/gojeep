@@ -17,11 +17,11 @@ type Dependencies struct {
 
 type Service struct {
 	Base BaseService
-	User UserService
+	User AuthService
 }
 
 func NewService(deps *Dependencies) *Service {
-	userSvcDeps := &UserServiceDeps{
+	userSvcDeps := &AuthServiceDeps{
 		Repo:   deps.Repo.User,
 		Hasher: deps.Hasher,
 		Signer: deps.Signer,
@@ -30,6 +30,6 @@ func NewService(deps *Dependencies) *Service {
 	}
 	return &Service{
 		Base: NewBaseService(deps.Repo.Base),
-		User: NewUserService(userSvcDeps),
+		User: NewAuthService(userSvcDeps),
 	}
 }

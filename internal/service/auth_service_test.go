@@ -96,7 +96,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 
 	mockRepo.EXPECT().CreateUser(ctx, createParams).Return(user, nil)
 
-	deps := &service.UserServiceDeps{
+	deps := &service.AuthServiceDeps{
 		Repo:   mockRepo,
 		Hasher: mockHasher,
 		Signer: mockSigner,
@@ -104,7 +104,7 @@ func TestUserService_RegisterUser(t *testing.T) {
 		Cfg:    cfg,
 	}
 
-	userService := service.NewUserService(deps)
+	userService := service.NewAuthService(deps)
 	newUser, err := userService.RegisterUser(ctx, regParams)
 	assert.NoError(t, err)
 	assert.NotNil(t, newUser)
@@ -140,14 +140,14 @@ func TestUserService_VerifyUser(t *testing.T) {
 	mockRepo.EXPECT().VerifyUser(ctx, id).Return(nil)
 	mockSigner.EXPECT().Verify(token).Return(id, nil)
 
-	deps := &service.UserServiceDeps{
+	deps := &service.AuthServiceDeps{
 		Repo:   mockRepo,
 		Hasher: mockHasher,
 		Signer: mockSigner,
 		Mailer: mockMailer,
 		Cfg:    cfg,
 	}
-	svc := service.NewUserService(deps)
+	svc := service.NewAuthService(deps)
 	err := svc.VerifyUser(ctx, token)
 
 	assert.NoError(t, err)
@@ -253,7 +253,7 @@ func TestUserService_LoginUser(t *testing.T) {
 					Return(tc.hasherResult, tc.hasherErr)
 			}
 
-			svc := service.NewUserService(&service.UserServiceDeps{
+			svc := service.NewAuthService(&service.AuthServiceDeps{
 				Repo:   mockRepo,
 				Hasher: mockHasher,
 				Cfg:    cfg,

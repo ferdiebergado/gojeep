@@ -153,7 +153,7 @@ func runRegisterUserTest(t *testing.T, tc testCase) {
 		tc.setupMocks(mockService)
 	}
 
-	userHandler := handler.NewUserHandler(mockService, mockSigner, cfg)
+	userHandler := handler.NewAuthHandler(mockService, mockSigner, cfg)
 	registerHandler := handler.ValidateInput[handler.RegisterUserRequest](validate)(
 		http.HandlerFunc(userHandler.HandleUserRegister))
 	registerHandler = handler.DecodeJSON[handler.RegisterUserRequest]()(registerHandler)
@@ -267,7 +267,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 			}
 			tt.mockServiceCall(mockService)
 
-			userHandler := handler.NewUserHandler(mockService, mockSigner, cfg)
+			userHandler := handler.NewAuthHandler(mockService, mockSigner, cfg)
 			userLoginHandler := handler.ValidateInput[handler.UserLoginRequest](validate)(
 				http.HandlerFunc(userHandler.HandleUserLogin))
 			userLoginHandler = handler.DecodeJSON[handler.UserLoginRequest]()(userLoginHandler)

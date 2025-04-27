@@ -17,13 +17,13 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/repository"
 )
 
-type UserService interface {
+type AuthService interface {
 	RegisterUser(ctx context.Context, params RegisterUserParams) (model.User, error)
 	VerifyUser(ctx context.Context, token string) error
 	LoginUser(ctx context.Context, params LoginUserParams) (accessToken, refreshToken string, err error)
 }
 
-type UserServiceDeps struct {
+type AuthServiceDeps struct {
 	Repo   repository.UserRepository
 	Hasher security.Hasher
 	Signer security.Signer
@@ -31,7 +31,7 @@ type UserServiceDeps struct {
 	Cfg    *config.Config
 }
 
-type userService struct {
+type authService struct {
 	repo   repository.UserRepository
 	hasher security.Hasher
 	signer security.Signer
@@ -39,7 +39,7 @@ type userService struct {
 	cfg    *config.Config
 }
 
-var _ UserService = (*userService)(nil)
+var _ AuthService = (*authService)(nil)
 var (
 	ErrUserNotFound    = errors.New("user not found")
 	ErrUserNotVerified = errors.New("email not verified")
@@ -47,8 +47,8 @@ var (
 	ErrInvalidToken    = errors.New("invalid token")
 )
 
-func NewUserService(deps *UserServiceDeps) UserService {
-	return &userService{
+func NewAuthService(deps *AuthServiceDeps) AuthService {
+	return &authService{
 		repo:   deps.Repo,
 		hasher: deps.Hasher,
 		mailer: deps.Mailer,
@@ -78,7 +78,7 @@ func (p *LoginUserParams) LogValue() slog.Value {
 	)
 }
 
-func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParams) (model.User, error) {
+func (s *authService) RegisterUser(ctx context.Context, params RegisterUserParams) (model.User, error) {
 	email := params.Email
 	existing, err := s.repo.FindUserByEmail(ctx, email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -104,7 +104,7 @@ func (s *userService) RegisterUser(ctx context.Context, params RegisterUserParam
 	return user, nil
 }
 
-func (s *userService) sendVerificationEmail(user model.User) {
+func (s *authService) sendVerificationEmail(user model.User) {
 	slog.Info("Sending verification email...")
 
 	const (
@@ -131,7 +131,7 @@ func (s *userService) sendVerificationEmail(user model.User) {
 	}
 }
 
-func (s *userService) VerifyUser(ctx context.Context, token string) error {
+func (s *authService) VerifyUser(ctx context.Context, token string) error {
 	userID, err := s.signer.Verify(token)
 	if err != nil {
 		return ErrInvalidToken
@@ -140,7 +140,7 @@ func (s *userService) VerifyUser(ctx context.Context, token string) error {
 	return s.repo.VerifyUser(ctx, userID)
 }
 
-func (s *userService) LoginUser(ctx context.Context, params LoginUserParams) (accessToken, refreshToken string, err error) {
+func (s *authService) LoginUser(ctx context.Context, params LoginUserParams) (accessToken, refreshToken string, err error) {
 	user, err := s.repo.FindUserByEmail(ctx, params.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
