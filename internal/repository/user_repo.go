@@ -12,6 +12,7 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, params CreateUserParams) (model.User, error)
 	FindUserByEmail(ctx context.Context, email string) (model.User, error)
 	VerifyUser(ctx context.Context, userID string) error
+	ListUsers(ctx context.Context) ([]model.User, error)
 }
 
 type userRepo struct {
@@ -73,4 +74,29 @@ func (r *userRepo) VerifyUser(ctx context.Context, userID string) error {
 	}
 
 	return nil
+}
+
+const QueryUserList = "SELECT id, email, verified_at, created_at, updated_at FROM users"
+
+func (r *userRepo) ListUsers(ctx context.Context) ([]model.User, error) {
+	rows, err := r.db.QueryContext(ctx, QueryUserList)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []model.User
+	for rows.Next() {
+		var user model.User
+		if err := rows.Scan(&user.ID, &user.Email, &user.VerifiedAt, &user.CreatedAt, &user.UpdatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

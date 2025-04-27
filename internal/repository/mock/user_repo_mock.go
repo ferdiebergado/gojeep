@@ -72,6 +72,21 @@ func (mr *MockUserRepositoryMockRecorder) FindUserByEmail(ctx, email any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUserByEmail", reflect.TypeOf((*MockUserRepository)(nil).FindUserByEmail), ctx, email)
 }
 
+// ListUsers mocks base method.
+func (m *MockUserRepository) ListUsers(ctx context.Context) ([]model.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUsers", ctx)
+	ret0, _ := ret[0].([]model.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUsers indicates an expected call of ListUsers.
+func (mr *MockUserRepositoryMockRecorder) ListUsers(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockUserRepository)(nil).ListUsers), ctx)
+}
+
 // VerifyUser mocks base method.
 func (m *MockUserRepository) VerifyUser(ctx context.Context, userID string) error {
 	m.ctrl.T.Helper()

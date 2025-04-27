@@ -10,6 +10,7 @@ import (
 	"github.com/ferdiebergado/gojeep/internal/model"
 	"github.com/ferdiebergado/gojeep/internal/repository"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -218,4 +219,89 @@ func TestUserRepo_VerifyUser(t *testing.T) {
 	err = repo.VerifyUser(ctx, userID)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestUserRepo_ListUsers(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		mockSetup func(sqlmock.Sqlmock)
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		wantLen int
+	}{
+		{
+			name: "success - one user",
+			args: args{
+				mockSetup: func(mock sqlmock.Sqlmock) {
+					rows := sqlmock.NewRows([]string{"id", "email", "verified_at", "created_at", "updated_at"}).
+						AddRow("1", "abc@example.com", time.Now(), time.Now(), time.Now())
+					mock.ExpectQuery(repository.QueryUserList).WillReturnRows(rows)
+				},
+			},
+			wantErr: false,
+			wantLen: 1,
+		},
+		{
+			name: "success - no users",
+			args: args{
+				mockSetup: func(mock sqlmock.Sqlmock) {
+					rows := sqlmock.NewRows([]string{"id", "email", "verified_at", "created_at", "updated_at"})
+					mock.ExpectQuery(repository.QueryUserList).WillReturnRows(rows)
+				},
+			},
+			wantErr: false,
+			wantLen: 0,
+		},
+		{
+			name: "query error",
+			args: args{
+				mockSetup: func(mock sqlmock.Sqlmock) {
+					mock.ExpectQuery(repository.QueryUserList).WillReturnError(errors.New("query failed"))
+				},
+			},
+			wantErr: true,
+			wantLen: 0,
+		},
+		{
+			name: "scan error - invalid column type",
+			args: args{
+				mockSetup: func(mock sqlmock.Sqlmock) {
+					rows := sqlmock.NewRows([]string{"id", "email", "verified_at", "created_at", "updated_at"}).
+						AddRow(1, 12345, "invalid_time", "invalid_time", "invalid_time") // email and timestamps wrong
+					mock.ExpectQuery(repository.QueryUserList).WillReturnRows(rows)
+				},
+			},
+			wantErr: true,
+			wantLen: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New(sqlmockOpts)
+			require.NoError(t, err)
+			defer db.Close()
+
+			repo := repository.NewUserRepository(db)
+			ctx := context.Background()
+
+			tt.args.mockSetup(mock)
+
+			users, err := repo.ListUsers(ctx)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Len(t, users, tt.wantLen)
+		})
+	}
 }
