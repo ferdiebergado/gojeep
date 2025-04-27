@@ -254,8 +254,8 @@ func (h *UserHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1, // expire immediately
 	})
 
-	res := map[string]string{
-		"Message": message.UserLogoutSuccess,
+	res := Response[any]{
+		Message: message.UserLogoutSuccess,
 	}
 
 	response.JSON(w, http.StatusOK, res)
