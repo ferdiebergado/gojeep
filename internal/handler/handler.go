@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/pkg/message"
+	"github.com/ferdiebergado/gojeep/internal/pkg/security"
 	"github.com/ferdiebergado/gojeep/internal/service"
 	"github.com/ferdiebergado/gopherkit/http/response"
 )
@@ -28,10 +30,10 @@ type Handler struct {
 	User UserHandler
 }
 
-func New(svc service.Service) *Handler {
+func New(svc service.Service, signer security.Signer, cfg *config.Config) *Handler {
 	return &Handler{
 		Base: *NewBaseHandler(svc.Base),
-		User: *NewUserHandler(svc.User),
+		User: *NewUserHandler(svc.User, signer, cfg),
 	}
 }
 
@@ -58,11 +60,15 @@ func (h *BaseHandler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 
 type UserHandler struct {
 	service service.UserService
+	signer  security.Signer
+	cfg     *config.Config
 }
 
-func NewUserHandler(userService service.UserService) *UserHandler {
+func NewUserHandler(userService service.UserService, signer security.Signer, cfg *config.Config) *UserHandler {
 	return &UserHandler{
 		service: userService,
+		signer:  signer,
+		cfg:     cfg,
 	}
 }
 
@@ -191,6 +197,35 @@ func (h *UserHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		Message: message.UserLoginSuccess,
 		Data: &UserLoginResponse{
 			AccessToken: accessToken,
+		},
+	}
+
+	response.JSON(w, http.StatusOK, res)
+}
+
+func (h *UserHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		unauthorizedResponse(w, err, "Unauthorized")
+		return
+	}
+
+	userID, err := h.signer.Verify(cookie.Value)
+	if err != nil {
+		unauthorizedResponse(w, err, "Unauthorized")
+		return
+	}
+
+	newAccessToken, err := h.signer.Sign(userID, []string{h.cfg.JWT.Issuer}, time.Duration(h.cfg.JWT.Duration)*time.Minute)
+	if err != nil {
+		response.ServerError(w, err)
+		return
+	}
+
+	res := Response[*UserLoginResponse]{
+		Message: message.UserLoginSuccess,
+		Data: &UserLoginResponse{
+			AccessToken: newAccessToken,
 		},
 	}
 

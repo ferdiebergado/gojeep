@@ -13,6 +13,7 @@ func MountRoutes(r router.Router, h *Handler, v *validator.Validate) {
 		gr.Get("/verify", h.User.VerifyEmail)
 		gr.Post("/login", h.User.HandleUserLogin,
 			DecodeJSON[UserLoginRequest](), ValidateInput[UserLoginRequest](v))
+		gr.Post("/refresh", h.User.HandleRefreshToken)
 		return gr
 	})
 }

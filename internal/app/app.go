@@ -90,6 +90,6 @@ func (a *application) SetupRoutes() {
 	}
 	svc := service.NewService(deps)
 
-	apiHandler := handler.New(*svc)
+	apiHandler := handler.New(*svc, a.signer, a.cfg)
 	handler.MountRoutes(a.handler, apiHandler, a.validater)
 }

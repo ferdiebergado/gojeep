@@ -9,10 +9,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/handler"
 	"github.com/ferdiebergado/gojeep/internal/model"
 	"github.com/ferdiebergado/gojeep/internal/pkg/logging"
 	"github.com/ferdiebergado/gojeep/internal/pkg/message"
+	secMock "github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
+
 	"github.com/ferdiebergado/gojeep/internal/service"
 	"github.com/ferdiebergado/gojeep/internal/service/mock"
 	"github.com/go-playground/validator/v10"
@@ -138,12 +141,19 @@ func runRegisterUserTest(t *testing.T, tc testCase) {
 	defer ctrl.Finish()
 
 	mockService := mock.NewMockUserService(ctrl)
+	mockSigner := secMock.NewMockSigner(ctrl)
 
+	cfg := &config.Config{
+		JWT: &config.JWTOptions{
+			Issuer:   "localhost:8888",
+			Duration: 15,
+		},
+	}
 	if tc.setupMocks != nil {
 		tc.setupMocks(mockService)
 	}
 
-	userHandler := handler.NewUserHandler(mockService)
+	userHandler := handler.NewUserHandler(mockService, mockSigner, cfg)
 	registerHandler := handler.ValidateInput[handler.RegisterUserRequest](validate)(
 		http.HandlerFunc(userHandler.HandleUserRegister))
 	registerHandler = handler.DecodeJSON[handler.RegisterUserRequest]()(registerHandler)
@@ -198,7 +208,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 						Email:    testEmail,
 						Password: testPass,
 					}).
-					Return("mock_access_token", nil)
+					Return("mock_access_token", "mock_refresh_token", nil)
 			},
 		},
 		{
@@ -238,7 +248,7 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 						Email:    testEmail,
 						Password: "wrongpass",
 					}).
-					Return("", service.ErrUserNotFound)
+					Return("", "", service.ErrUserNotFound)
 			},
 		},
 	}
@@ -247,9 +257,17 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			mockService := mock.NewMockUserService(ctrl)
+			mockSigner := secMock.NewMockSigner(ctrl)
+
+			cfg := &config.Config{
+				JWT: &config.JWTOptions{
+					Issuer:   "localhost:8888",
+					Duration: 15,
+				},
+			}
 			tt.mockServiceCall(mockService)
 
-			userHandler := handler.NewUserHandler(mockService)
+			userHandler := handler.NewUserHandler(mockService, mockSigner, cfg)
 			userLoginHandler := handler.ValidateInput[handler.UserLoginRequest](validate)(
 				http.HandlerFunc(userHandler.HandleUserLogin))
 			userLoginHandler = handler.DecodeJSON[handler.UserLoginRequest]()(userLoginHandler)
