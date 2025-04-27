@@ -231,3 +231,32 @@ func (h *UserHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request)
 
 	response.JSON(w, http.StatusOK, res)
 }
+
+func (h *UserHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	_, err := r.Cookie("refresh_token")
+	// if err == nil {
+	//     _ = InvalidateRefreshToken(cookie.Value) // optional: best effort
+	// }
+
+	if err != nil {
+		response.ServerError(w, err)
+		return
+	}
+
+	// Expire the cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   -1, // expire immediately
+	})
+
+	res := map[string]string{
+		"Message": message.UserLogoutSuccess,
+	}
+
+	response.JSON(w, http.StatusOK, res)
+}

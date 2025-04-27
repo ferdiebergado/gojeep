@@ -10,4 +10,5 @@ const (
 	UserRegSuccess    = "A link to activate your account has been emailed to the address provided."
 	UserUnverified    = "Please verify your email."
 	UserVerifySuccess = "Verification successful!"
+	UserLogoutSuccess = "Logout successful."
 )
