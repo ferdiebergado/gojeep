@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -29,4 +31,18 @@ func errorResponse(w http.ResponseWriter, status int, err error, msg string) {
 		Message: msg,
 	}
 	response.JSON(w, status, res)
+}
+
+func isContextError(err error) bool {
+	if errors.Is(err, context.Canceled) {
+		slog.Debug("Request cancelled")
+		return true
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) {
+		slog.Debug("Request deadline exceeded")
+		return true
+	}
+
+	return false
 }

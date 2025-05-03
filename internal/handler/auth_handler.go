@@ -60,6 +60,11 @@ func (h *AuthHandler) HandleUserRegister(w http.ResponseWriter, r *http.Request)
 			unprocessableResponse(w, err, message.UserExists)
 			return
 		}
+
+		if isContextError(err) {
+			return
+		}
+
 		response.ServerError(w, err)
 		return
 	}
