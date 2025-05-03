@@ -1,11 +1,13 @@
 package handler_test
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ferdiebergado/gojeep/internal/handler"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security/mock"
@@ -95,5 +97,92 @@ func TestRequireAuth(t *testing.T) {
 				t.Errorf("expected body %q, got %q", tt.expectedBody, strings.TrimSpace(rr.Body.String()))
 			}
 		})
+	}
+}
+
+func TestWriteHeaderOnce(t *testing.T) {
+	rec := httptest.NewRecorder()
+	ctx := context.Background()
+	w := handler.NewSafeResponseWriter(ctx, rec)
+
+	w.WriteHeader(http.StatusAccepted)
+	w.WriteHeader(http.StatusTeapot) // Should be ignored
+
+	if rec.Code != http.StatusAccepted {
+		t.Errorf("expected status %d, got %d", http.StatusAccepted, rec.Code)
+	}
+	if w.Status() != http.StatusAccepted {
+		t.Errorf("SafeResponseWriter status mismatch: got %d", w.Status())
+	}
+}
+
+func TestWriteImplicitHeader(t *testing.T) {
+	rec := httptest.NewRecorder()
+	ctx := context.Background()
+	w := handler.NewSafeResponseWriter(ctx, rec)
+
+	body := []byte("hello")
+	n, err := w.Write(body)
+	if err != nil {
+		t.Fatalf("unexpected write error: %v", err)
+	}
+	if n != len(body) {
+		t.Errorf("expected %d bytes written, got %d", len(body), n)
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected default status %d, got %d", http.StatusOK, rec.Code)
+	}
+	if w.Status() != http.StatusOK {
+		t.Errorf("SafeResponseWriter status mismatch: got %d", w.Status())
+	}
+	if w.BytesWritten() != len(body) {
+		t.Errorf("expected %d bytes written, got %d", len(body), w.BytesWritten())
+	}
+}
+
+func TestNoWriteAfterContextCancel(t *testing.T) {
+	rec := httptest.NewRecorder()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	w := handler.NewSafeResponseWriter(ctx, rec)
+
+	w.WriteHeader(http.StatusOK)
+	n, err := w.Write([]byte("should not write"))
+
+	if n != 0 {
+		t.Errorf("expected 0 bytes written, got %d", n)
+	}
+	if err != nil {
+		t.Errorf("unexpected error on canceled write: %v", err)
+	}
+	if w.BytesWritten() != 0 {
+		t.Errorf("expected 0 bytes written, got %d", w.BytesWritten())
+	}
+}
+
+func TestConcurrentWrites(t *testing.T) {
+	rec := httptest.NewRecorder()
+	ctx := context.Background()
+	w := handler.NewSafeResponseWriter(ctx, rec)
+
+	done := make(chan struct{}, 2)
+
+	go func() {
+		w.WriteHeader(http.StatusCreated)
+		done <- struct{}{}
+	}()
+	go func() {
+		_, _ = w.Write([]byte("hi"))
+		done <- struct{}{}
+	}()
+
+	timeout := time.After(1 * time.Second)
+	for range 2 {
+		select {
+		case <-done:
+		case <-timeout:
+			t.Fatal("concurrent writes timed out")
+		}
 	}
 }

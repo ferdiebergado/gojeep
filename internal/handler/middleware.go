@@ -1,12 +1,15 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/ferdiebergado/gojeep/internal/pkg/message"
 	"github.com/ferdiebergado/gojeep/internal/pkg/security"
@@ -95,4 +98,103 @@ func extractBearerToken(header string) (string, error) {
 		return "", errors.New("missing Bearer prefix")
 	}
 	return strings.TrimSpace(header[len(prefix):]), nil
+}
+
+type SafeResponseWriter struct {
+	http.ResponseWriter
+	ctx       context.Context
+	mu        sync.Mutex
+	status    int
+	written   bool
+	bytesSent int
+}
+
+func NewSafeResponseWriter(ctx context.Context, w http.ResponseWriter) *SafeResponseWriter {
+	return &SafeResponseWriter{
+		ResponseWriter: w,
+		ctx:            ctx,
+		status:         http.StatusOK,
+	}
+}
+
+func (w *SafeResponseWriter) WriteHeader(statusCode int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.ctx.Err() != nil || w.written {
+		return
+	}
+
+	w.ResponseWriter.WriteHeader(statusCode)
+	w.status = statusCode
+	w.written = true
+}
+
+func (w *SafeResponseWriter) Write(b []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if w.ctx.Err() != nil {
+		return 0, nil
+	}
+
+	if !w.written {
+		w.ResponseWriter.WriteHeader(http.StatusOK)
+		w.status = http.StatusOK
+		w.written = true
+	}
+
+	n, err := w.ResponseWriter.Write(b)
+	w.bytesSent += n
+	return n, err
+}
+
+func (w *SafeResponseWriter) Status() int {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.status
+}
+
+func (w *SafeResponseWriter) BytesWritten() int {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.bytesSent
+}
+
+func LogRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		safeW := NewSafeResponseWriter(r.Context(), w)
+
+		next.ServeHTTP(safeW, r)
+
+		duration := time.Since(start)
+		slog.Info("incoming request",
+			"user_agent", r.UserAgent(),
+			"remote", getIPAddress(r),
+			"method", r.Method,
+			"url", r.URL.String(),
+			"proto", r.Proto,
+			slog.Int("status_code", safeW.Status()),
+			slog.Int("bytes", safeW.BytesWritten()),
+			"duration", duration,
+		)
+	})
+}
+
+// getIPAddress extracts the client's IP address from the request.
+func getIPAddress(r *http.Request) string {
+	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+		return ip
+	}
+
+	if forwardedFor := r.Header.Values("X-Forwarded-For"); len(forwardedFor) > 0 {
+		firstIP := forwardedFor[0]
+		ips := strings.Split(firstIP, ",")
+		if len(ips) > 0 {
+			return strings.TrimSpace(ips[0])
+		}
+	}
+
+	return r.RemoteAddr
 }

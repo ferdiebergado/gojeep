@@ -76,7 +76,7 @@ func (a *application) Router() router.Router {
 
 func (a *application) SetupMiddlewares() {
 	a.handler.Use(goexpress.RecoverFromPanic)
-	a.handler.Use(goexpress.LogRequest)
+	a.handler.Use(handler.LogRequest)
 }
 
 func (a *application) SetupRoutes() {
