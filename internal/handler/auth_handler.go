@@ -143,14 +143,16 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cookieCfg := h.cfg.Cookie
+
 	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
+		Name:     cookieCfg.Name,
 		Value:    refreshToken,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
-		MaxAge:   7 * 24 * 60 * 60, // 7 days
+		MaxAge:   cookieCfg.MaxAge,
 	})
 
 	res := Response[*UserLoginResponse]{
@@ -164,7 +166,7 @@ func (h *AuthHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("refresh_token")
+	cookie, err := r.Cookie(h.cfg.Cookie.Name)
 	if err != nil {
 		unauthorizedResponse(w, err, "Unauthorized")
 		return
@@ -193,7 +195,8 @@ func (h *AuthHandler) HandleRefreshToken(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("refresh_token")
+	cookieName := h.cfg.Cookie.Name
+	_, err := r.Cookie(cookieName)
 	// if err == nil {
 	//     _ = InvalidateRefreshToken(cookie.Value) // optional: best effort
 	// }
@@ -205,7 +208,7 @@ func (h *AuthHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 
 	// Expire the cookie
 	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
+		Name:     cookieName,
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,

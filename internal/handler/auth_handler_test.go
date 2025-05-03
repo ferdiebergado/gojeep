@@ -264,6 +264,10 @@ func TestUserHandler_HandleUserLogin(t *testing.T) {
 					Issuer:   "localhost:8888",
 					Duration: 15,
 				},
+				Cookie: &config.CookieOptions{
+					Name:   "refresh_token",
+					MaxAge: 60,
+				},
 			}
 			tt.mockServiceCall(mockService)
 

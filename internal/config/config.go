@@ -107,12 +107,18 @@ type Argon2Options struct {
 	KeyLength  uint32 `json:"key_length,omitempty"`
 }
 
+type CookieOptions struct {
+	Name   string `json:"name,omitempty"`
+	MaxAge int    `json:"max_age,omitempty"`
+}
+
 type Options struct {
 	Server *ServerOptions `json:"server,omitempty"`
 	DB     *DBOptions     `json:"db,omitempty"`
 	JWT    *JWTOptions    `json:"jwt,omitempty"`
 	Email  *EmailOptions  `json:"email,omitempty"`
 	Hash   *Argon2Options `json:"hash,omitempty"`
+	Cookie *CookieOptions `json:"cookie,omitempty"`
 }
 
 type Config struct {
@@ -121,6 +127,7 @@ type Config struct {
 	Email  *SMTPConfig
 	JWT    *JWTOptions
 	Hash   *Argon2Options
+	Cookie *CookieOptions
 }
 
 func (c *Config) LogValue() slog.Value {
@@ -130,6 +137,7 @@ func (c *Config) LogValue() slog.Value {
 		slog.Any("email", c.Email),
 		slog.Any("jwt", c.JWT),
 		slog.Any("hash", c.Hash),
+		slog.Any("cookie", c.Cookie),
 	)
 }
 
@@ -166,8 +174,9 @@ func Load(cfgFile string) (*Config, error) {
 			Port:     env.GetInt("SMTP_PORT", envDefaultSMTPPort),
 			Options:  opts.Email,
 		},
-		JWT:  opts.JWT,
-		Hash: opts.Hash,
+		JWT:    opts.JWT,
+		Hash:   opts.Hash,
+		Cookie: opts.Cookie,
 	}
 
 	slog.Debug("config loaded", slog.Any("config", cfg))

@@ -30,5 +30,9 @@
     "verify_ttl": 300,
     "template_path": "web/templates",
     "layout_file": "base.html"
+  },
+  "cookie": {
+    "name": "refresh_token",
+    "max_age": 604800
   }
 }
