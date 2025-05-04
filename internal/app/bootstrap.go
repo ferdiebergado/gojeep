@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/ferdiebergado/gojeep/internal/config"
 	"github.com/ferdiebergado/gojeep/internal/handler"
@@ -17,6 +19,11 @@ import (
 )
 
 func Run(ctx context.Context) error {
+	slog.Info("Initializing...")
+
+	signalCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer stop()
+
 	cfgFile := flag.String("cfg", "config.json", "Config file")
 	logLevel := flag.String("loglevel", "", "Log level (info/warn/error/debug)")
 	flag.Parse()
@@ -35,11 +42,16 @@ func Run(ctx context.Context) error {
 		return err
 	}
 
-	dbConn, err := db.Connect(ctx, cfg.DB)
+	dbConn, err := db.Connect(signalCtx, cfg.DB)
 	if err != nil {
 		return err
 	}
-	defer dbConn.Close()
+	defer func() {
+		if err := dbConn.Close(); err != nil {
+			slog.Error("failed to close the database", "reason", err)
+			return
+		}
+	}()
 
 	validate := validation.New()
 	deps, err := newDependencies(cfg, dbConn, validate)
@@ -50,14 +62,15 @@ func Run(ctx context.Context) error {
 	application := New(deps)
 	application.SetupRoutes()
 
-	apiServer := server.New(cfg.Server, application.Router())
+	apiServer := server.New(signalCtx, cfg.Server, application.Router())
 	apiServerErr := apiServer.Start()
+
 	select {
-	case <-ctx.Done():
+	case <-signalCtx.Done():
 		slog.Info("Shutdown signal received.")
 	case err := <-apiServerErr:
 		return fmt.Errorf("server error: %w", err)
 	}
 
-	return apiServer.Shutdown()
+	return apiServer.Shutdown(ctx)
 }

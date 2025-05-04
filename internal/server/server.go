@@ -13,31 +13,33 @@ import (
 )
 
 type Server struct {
-	http.Server
+	*http.Server
 	stop            context.CancelFunc
 	shutdownTimeout time.Duration
 }
 
-func New(cfg *config.ServerConfig, handler http.Handler) *Server {
-	serverCtx, stopServer := context.WithCancel(context.Background())
+func New(ctx context.Context, cfg *config.ServerConfig, handler http.Handler) *Server {
+	serverCtx, stopServer := context.WithCancel(ctx)
 	opts := cfg.Options
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.Port),
+		Handler:      handler,
+		ReadTimeout:  time.Duration(opts.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(opts.WriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(opts.IdleTimeout) * time.Second,
+		BaseContext: func(_ net.Listener) context.Context {
+			return serverCtx
+		}}
+
 	return &Server{
-		Server: http.Server{
-			Addr:         fmt.Sprintf(":%d", cfg.Port),
-			Handler:      handler,
-			ReadTimeout:  time.Duration(opts.ReadTimeout) * time.Second,
-			WriteTimeout: time.Duration(opts.WriteTimeout) * time.Second,
-			IdleTimeout:  time.Duration(opts.IdleTimeout) * time.Second,
-			BaseContext: func(_ net.Listener) context.Context {
-				return serverCtx
-			},
-		},
+		Server:          srv,
 		stop:            stopServer,
 		shutdownTimeout: time.Duration(opts.ShutdownTimeout) * time.Second,
 	}
 }
 
 func (s *Server) Start() chan error {
+	slog.Info("Starting server...")
 	serverErr := make(chan error, 1)
 	go func() {
 		slog.Info("Server started", "address", s.Addr)
@@ -49,17 +51,17 @@ func (s *Server) Start() chan error {
 	return serverErr
 }
 
-func (s *Server) Shutdown() error {
+func (s *Server) Shutdown(ctx context.Context) error {
 	slog.Info("Shutting down server...")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
+	s.stop()
+
+	shutdownCtx, cancel := context.WithTimeout(ctx, s.shutdownTimeout)
 	defer cancel()
 
 	if err := s.Server.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("server forced to shutdown: %w", err)
 	}
 
-	s.stop()
-
-	slog.Info("Server gracefully shut down.")
+	slog.Info("Shutdown complete.")
 	return nil
 }

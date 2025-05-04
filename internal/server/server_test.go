@@ -27,7 +27,8 @@ func TestServer_StartAndResponds(t *testing.T) {
 		},
 	}
 
-	srv := server.New(cfg, handler)
+	ctx := context.Background()
+	srv := server.New(ctx, cfg, handler)
 	errCh := srv.Start()
 
 	time.Sleep(100 * time.Millisecond)
@@ -42,7 +43,7 @@ func TestServer_StartAndResponds(t *testing.T) {
 		t.Errorf("expected 200 OK, got %d", resp.StatusCode)
 	}
 
-	if err := srv.Shutdown(); err != nil {
+	if err := srv.Shutdown(ctx); err != nil {
 		t.Errorf("shutdown error: %v", err)
 	}
 
@@ -69,7 +70,8 @@ func TestServer_CancelsRequestContextOnShutdown(t *testing.T) {
 		},
 	}
 
-	srv := server.New(cfg, handler)
+	ctx := context.Background()
+	srv := server.New(ctx, cfg, handler)
 	errCh := srv.Start()
 	time.Sleep(100 * time.Millisecond)
 
@@ -80,7 +82,7 @@ func TestServer_CancelsRequestContextOnShutdown(t *testing.T) {
 
 	reqCtx := <-ctxChan
 
-	if err := srv.Shutdown(); err != nil {
+	if err := srv.Shutdown(ctx); err != nil {
 		t.Fatalf("shutdown failed: %v", err)
 	}
 
@@ -113,7 +115,8 @@ func TestServer_StartFailsIfPortInUse(t *testing.T) {
 		},
 	}
 
-	srv := server.New(cfg, http.NewServeMux())
+	ctx := context.Background()
+	srv := server.New(ctx, cfg, http.NewServeMux())
 	errCh := srv.Start()
 
 	err = <-errCh
